@@ -1341,49 +1341,85 @@ function renderChartFornComp() {
 }
 
 // ─── MOVIGRAMA ───
-function renderMovigrama(dataToRender) {
-  // Se não passarmos dados (ex: no carregamento inicial), usa o moviData completo
-  const targetData = dataToRender || moviData;
+
+function renderMovigrama() {
+  // 1. Agrupar volumes por data usando os dados da aba principal (filteredData)
+  const stats = {};
   
-  const labels = targetData.map(r => r[0]);
-  const ent    = targetData.map(r => parseFloat(r[1]) || 0);
-  const sai    = targetData.map(r => parseFloat(r[2]) || 0);
-  const saldo  = targetData.map(r => parseFloat(r[4]) || 0);
+  filteredData.forEach(r => {
+    const dataEntrada = r[COL.ENT_LOG]; // Coluna N
+    if (!dataEntrada) return;
 
-  const totalEnt  = ent.reduce((a,b) => a+b, 0);
-  const totalSai  = sai.reduce((a,b) => a+b, 0);
-  const curSaldo  = saldo[saldo.length - 1] || 0;
-  const avgSaldo  = saldo.reduce((a,b) => a+b, 0) / (saldo.length || 1);
-  const diasAltos = saldo.filter(s => s > avgSaldo).length;
+    if (!stats[dataEntrada]) {
+      stats[dataEntrada] = { ent: 0, sai: 0 };
+    }
 
-  document.getElementById('moviSaldo').textContent   = fmt1(curSaldo);
-  document.getElementById('moviEntrada').textContent = fmt1(totalEnt);
-  document.getElementById('moviSaida').textContent   = fmt1(totalSai);
-  document.getElementById('moviDiasAltos').textContent = diasAltos;
+    // Soma Entrada (Coluna K - Volume Comprado)
+    stats[dataEntrada].ent += parseFloat(r[COL.VOL_NF]) || 0;
 
-  destroyChart('chartMovigrama');
-  charts['chartMovigrama'] = new Chart(document.getElementById('chartMovigrama'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { type: 'bar',  label: 'Entrada',         data: ent,   backgroundColor: 'rgba(92,184,122,0.5)',  borderColor: 'rgba(92,184,122,1)', borderWidth: 1, yAxisID: 'y' },
-        { type: 'bar',  label: 'Saída',            data: sai,   backgroundColor: 'rgba(224,154,60,0.5)',  borderColor: 'rgba(224,154,60,1)', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Saldo Acumulado',  data: saldo, borderColor: 'rgba(92,155,224,1)', backgroundColor: 'rgba(92,155,224,0.08)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y2' }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { labels: { color: '#7a8099', font: { family: 'DM Mono', size: 11 } } } },
-      scales: {
-        x: { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 20 }, grid: { color: '#2a2f42' } },
-        y:  { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#2a2f42' }, title: { display: true, text: 'm³ diário', color: '#7a8099', font: { size: 10 } } },
-        y2: { position: 'right', ticks: { color: 'rgba(92,155,224,0.8)', font: { family: 'DM Mono', size: 10 } }, grid: { display: false }, title: { display: true, text: 'Saldo (m³)', color: 'rgba(92,155,224,0.8)', font: { size: 10 } } }
-      }
+    // Soma Saída (Se estiver LIBERADO, considera o Volume Físico da Coluna P)
+    if (r[COL.STATUS] === 'LIBERADO' || r[COL.STATUS] === 'FINALIZADO') {
+      stats[dataEntrada].sai += parseFloat(r[COL.VOL_FIS]) || 0;
     }
   });
 
+  // 2. Ordenar as datas para o gráfico não ficar bagunçado
+  const sortedDates = Object.keys(stats).sort((a, b) => {
+    const parseDate = (d) => {
+      const parts = d.split('/');
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    };
+    return parseDate(a) - parseDate(b);
+  });
+
+  // 3. Preparar arrays para o gráfico e calcular Saldo Acumulado
+  const labels = [];
+  const entData = [];
+  const saiData = [];
+  const saldoData = [];
+  let acumulado = 0;
+
+  sortedDates.forEach(d => {
+    labels.push(d);
+    entData.push(stats[d].ent);
+    saiData.push(stats[d].sai);
+    acumulado += (stats[d].ent - stats[d].sai);
+    saldoData.push(acumulado);
+  });
+
+  // 4. Atualizar os mini-cards do Movigrama
+  const totalEnt = entData.reduce((a, b) => a + b, 0);
+  const totalSai = saiData.reduce((a, b) => a + b, 0);
+  const curSaldo = saldoData[saldoData.length - 1] || 0;
+
+  document.getElementById('moviSaldo').textContent = fmt1(curSaldo);
+  document.getElementById('moviEntrada').textContent = fmt1(totalEnt);
+  document.getElementById('moviSaida').textContent = fmt1(totalSai);
+  document.getElementById('moviDiasAltos').textContent = labels.length;
+
+  // 5. Desenhar o Gráfico
+  destroyChart('chartMovigrama');
+  charts['chartMovigrama'] = new Chart(document.getElementById('chartMovigrama'), {
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar', label: 'Entrada (m³)', data: entData, backgroundColor: 'rgba(92,184,122,0.5)', borderColor: 'rgba(92,184,122,1)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'bar', label: 'Saída (m³)', data: saiData, backgroundColor: 'rgba(224,154,60,0.5)', borderColor: 'rgba(224,154,60,1)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'line', label: 'Saldo Acumulado', data: saldoData, borderColor: '#5c9be0', backgroundColor: 'rgba(92,155,224,0.1)', fill: true, tension: 0.3, yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#7a8099', font: { family: 'DM Mono' } } } },
+      scales: {
+        x: { ticks: { color: '#7a8099', font: { size: 9 } }, grid: { color: '#2a2f42' } },
+        y: { title: { display: true, text: 'Movimentação Diária' }, ticks: { color: '#7a8099' }, grid: { color: '#2a2f42' } },
+        y2: { position: 'right', title: { display: true, text: 'Saldo Acumulado' }, grid: { display: false }, ticks: { color: '#5c9be0' } }
+      }
+    }
+  });
+}
   // Table
   const tbody = document.getElementById('tblMoviBody');
   tbody.innerHTML = '';
