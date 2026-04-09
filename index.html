@@ -1341,11 +1341,14 @@ function renderChartFornComp() {
 }
 
 // ─── MOVIGRAMA ───
-function renderMovigrama() {
-  const labels = moviData.map(r => r[0]);
-  const ent    = moviData.map(r => parseFloat(r[1]) || 0);
-  const sai    = moviData.map(r => parseFloat(r[2]) || 0);
-  const saldo  = moviData.map(r => parseFloat(r[4]) || 0);
+function renderMovigrama(dataToRender) {
+  // Se não passarmos dados (ex: no carregamento inicial), usa o moviData completo
+  const targetData = dataToRender || moviData;
+  
+  const labels = targetData.map(r => r[0]);
+  const ent    = targetData.map(r => parseFloat(r[1]) || 0);
+  const sai    = targetData.map(r => parseFloat(r[2]) || 0);
+  const saldo  = targetData.map(r => parseFloat(r[4]) || 0);
 
   const totalEnt  = ent.reduce((a,b) => a+b, 0);
   const totalSai  = sai.reduce((a,b) => a+b, 0);
