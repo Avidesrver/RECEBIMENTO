@@ -948,47 +948,25 @@
 // ═══════════════════════════════════════════════════
 // CONFIGURAÇÃO DE DADOS - CONEXÃO COM GOOGLE SHEETS
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// CONFIGURAÇÃO DE DADOS - CONEXÃO COM GOOGLE SHEETS
+// ═══════════════════════════════════════════════════
 const SHEET_ID = '1MFnPmUfxxzE1gjJzGVlVmdFOaHI-TmqonLnRGQNNQC8';
-
-// URL para a aba Acompanhamento_r1 (GID 0)
 const URL_ACOMPANHAMENTO = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
-
-// URL para a aba basemovigrama (O GID da sua aba é 1579213197)
 const URL_MOVIGRAMA = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1579213197`;
-// Mapeamento colunas (0-indexed)
+
+// Mapeamento das colunas da aba Acompanhamento_r1 (A=0, B=1, etc)
 const COL = {
-  FORNECEDOR: 0,   // A
-  MATERIAL:   1,   // B
-  NF:         2,   // C
-  OC:         3,   // D
-  ITEM:       4,   // E
-  DESC:       5,   // F
-  ESP:        7,   // H
-  LARG:       8,   // I
-  COMP:       9,   // J
-  VOL_COMP:   10,  // K
-  VOL_FIS:    15,  // P
-  PREV_COMP:  12,  // M
-  ENT_LOG:    13,  // N
-  INSP:       14,  // O
-  DIV_QUAL:   16,  // Q
-  DIV_QTD:    17,  // R
-  DIV_TOTAL:  18,  // S
-  STATUS:     20,  // U
-  MARCADOR:   21,  // V
-  LINK_INSP:  22,  // W
-  OBS_REC:    27,  // AB
-  OBS_COMP:   29,  // AD
-  TRATATIVA:  30,  // AE
-  ACAO_FINAL: 31,  // AF
+  FORNECEDOR: 0, MATERIAL: 1, NF: 2, OC: 3, ITEM: 4, DESC: 5,
+  ESP: 7, LARG: 8, COMP: 9, VOL_NF: 10, VOL_FIS: 15,
+  ENT_LOG: 13, INS_LIB: 14, Q_NC: 16, R_FALTA: 17, S_DIFF: 18,
+  STATUS: 20, TRATATIVA_COMPRAS: 21, LINK: 22,
+  OBS_REC: 27, TRAT_ACAO: 30, ACAO_FINAL: 31
 };
 
-// ═══════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════
 let rawData = [];
-let moviData = [];
 let filteredData = [];
+let moviData = [];
 let charts = {};
 
 // ═══════════════════════════════════════════════════
