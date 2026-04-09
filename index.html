@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recebimento de Madeira — Relatório Gerencial</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c26;
+    --surface2: #1e2333;
+    --border: #2a2f42;
+    --accent: #c8a96e;
+    --accent2: #e8c98e;
+    --danger: #e05c5c;
+    --warn: #e09a3c;
+    --ok: #5cb87a;
+    --info: #5c9be0;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0a0d14 0%, #141828 60%, #1a1f30 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 28px 40px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left { display: flex; flex-direction: column; gap: 2px; }
+  .header-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .header-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .header-badge {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #0f1117;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── TABS ── */
+  .tab-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 40px;
+    gap: 0;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 14px 20px 12px;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── FILTERS ── */
+  .filter-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 40px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-select, .filter-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    min-width: 140px;
+    transition: border 0.2s;
+  }
+  .filter-select:focus, .filter-input:focus { border-color: var(--accent); }
+  .filter-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: #0f1117;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 7px 16px;
+    transition: background 0.2s;
+  }
+  .filter-btn:hover { background: var(--accent2); }
+  .filter-btn.clear {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .filter-btn.clear:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── MAIN ── */
+  .main { padding: 32px 40px; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── KPI ROW ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 18px 16px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .kpi-card.danger::before { background: var(--danger); }
+  .kpi-card.warn::before { background: var(--warn); }
+  .kpi-card.ok::before { background: var(--ok); }
+  .kpi-card.info::before { background: var(--info); }
+  .kpi-card:hover { border-color: var(--accent); }
+  .kpi-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .kpi-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-delta {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .kpi-delta.up { color: var(--ok); }
+  .kpi-delta.down { color: var(--danger); }
+
+  /* ── SECTION ── */
+  .section { margin-bottom: 36px; }
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--accent);
+  }
+  .section-sub { font-size: 12px; color: var(--muted); }
+
+  /* ── GRID LAYOUTS ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media(max-width: 900px) {
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .main { padding: 20px; }
+    .header { padding: 16px 20px; }
+    .filter-bar { padding: 12px 20px; }
+    .tab-bar { padding: 0 20px; }
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .card-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* ── CHART CONTAINER ── */
+  .chart-wrap { position: relative; width: 100%; }
+  .chart-wrap canvas { max-width: 100%; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  th {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    padding: 10px 12px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--accent); }
+  td {
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    vertical-align: middle;
+  }
+  tr:hover td { background: rgba(200,169,110,0.04); }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── BADGES ── */
+  .badge {
+    border-radius: 4px;
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+  }
+  .badge-danger { background: rgba(224,92,92,0.15); color: var(--danger); }
+  .badge-warn { background: rgba(224,154,60,0.15); color: var(--warn); }
+  .badge-ok { background: rgba(92,184,122,0.15); color: var(--ok); }
+  .badge-info { background: rgba(92,155,224,0.15); color: var(--info); }
+  .badge-neutral { background: rgba(122,128,153,0.15); color: var(--muted); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    background: var(--border);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+    width: 100%;
+  }
+  .progress-fill {
+    border-radius: 99px;
+    height: 100%;
+    transition: width 0.6s ease;
+  }
+
+  /* ── MOVIGRAMA ── */
+  .movi-legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .movi-leg-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .movi-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  /* ── ANALYSIS BLOCKS ── */
+  .analysis-block {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+  }
+  .analysis-block.danger { border-left-color: var(--danger); }
+  .analysis-block.ok { border-left-color: var(--ok); }
+  .analysis-block.warn { border-left-color: var(--warn); }
+  .analysis-title {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .analysis-text { color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .analysis-text strong { color: var(--text); }
+
+  /* ── FORMULA BOX ── */
+  .formula-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent2);
+    padding: 10px 14px;
+    margin: 10px 0;
+    overflow-x: auto;
+  }
+
+  /* ── PRIORITY MATRIX ── */
+  .priority-row {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+  }
+  .priority-row:last-child { border-bottom: none; }
+  .priority-num {
+    background: var(--accent);
+    border-radius: 50%;
+    color: #0f1117;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+    width: 26px;
+  }
+  .priority-num.p2 { background: var(--warn); }
+  .priority-num.p3 { background: var(--ok); }
+  .priority-content { flex: 1; }
+  .priority-title { font-weight: 600; color: var(--text); font-size: 13px; }
+  .priority-desc { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  /* ── LOOKER FIELD ── */
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 12px;
+  }
+  .field-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+  .field-card:hover { border-color: var(--accent); }
+  .field-name {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .field-formula {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  .field-desc { font-size: 12px; color: var(--muted); }
+
+  /* ── DATA LOAD NOTICE ── */
+  .data-notice {
+    background: rgba(92,155,224,0.08);
+    border: 1px solid rgba(92,155,224,0.25);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    color: var(--info);
+  }
+  .data-notice svg { flex-shrink: 0; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <span class="header-eyebrow">Supply Chain · Setor de Recebimento</span>
+    <h1 class="header-title">Relatório Gerencial de Madeira</h1>
+    <span class="header-sub">Controle de NFs · Divergências · Movigrama · Plano de Ação</span>
+  </div>
+  <div class="header-badge" id="lastUpdate">Carregando…</div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('dashboard',this)">Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('fornecedores',this)">Fornecedores</button>
+  <button class="tab-btn" onclick="switchTab('movigrama',this)">Movigrama</button>
+  <button class="tab-btn" onclick="switchTab('nfs',this)">NFs / Detalhes</button>
+  <button class="tab-btn" onclick="switchTab('analise',this)">Análise & Looker</button>
+  <button class="tab-btn" onclick="switchTab('plano',this)">Plano de Ação</button>
+</div>
+
+<!-- FILTERS -->
+<div class="filter-bar">
+  <span class="filter-label">Filtros</span>
+  <div class="filter-group">
+    <label class="filter-label">Fornecedor</label>
+    <select class="filter-select" id="fFornecedor" onchange="applyFilters()">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Material</label>
+    <select class="filter-select" id="fMaterial" onchange="applyFilters()">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Data Entrada (de)</label>
+    <input type="date" class="filter-input" id="fDateFrom" onchange="applyFilters()">
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">até</label>
+    <input type="date" class="filter-input" id="fDateTo" onchange="applyFilters()">
+  </div>
+  <div class="filter-group">
+    <label class="filter-label">Status</label>
+    <select class="filter-select" id="fStatus" onchange="applyFilters()">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <button class="filter-btn clear" onclick="clearFilters()">Limpar</button>
+  <button class="filter-btn" onclick="loadFromSheets()">↻ Atualizar Dados</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ═══════════ TAB: DASHBOARD ═══════════ -->
+  <div class="tab-content active" id="tab-dashboard">
+
+    <div class="data-notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Este relatório lê sua planilha Google Sheets via CSV público. Clique em <strong>↻ Atualizar Dados</strong> para carregar os dados reais. Os gráficos abaixo mostram dados de demonstração enquanto a conexão não é estabelecida.</span>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card info"><div class="kpi-label">Total de NFs</div><div class="kpi-value" id="kpiNFs">—</div><div class="kpi-delta">Notas fiscais registradas</div></div>
+      <div class="kpi-card ok"><div class="kpi-label">Vol. Comprado (m³)</div><div class="kpi-value" id="kpiVolComp">—</div><div class="kpi-delta">Coluna K</div></div>
+      <div class="kpi-card warn"><div class="kpi-label">Vol. Físico (m³)</div><div class="kpi-value" id="kpiVolFis">—</div><div class="kpi-delta">Coluna P — conferido</div></div>
+      <div class="kpi-card danger"><div class="kpi-label">Divergência Total (m³)</div><div class="kpi-value" id="kpiDiv">—</div><div class="kpi-delta">Coluna S — Σ diferenças</div></div>
+      <div class="kpi-card"><div class="kpi-label">Lead Time Médio (dias)</div><div class="kpi-value" id="kpiLead">—</div><div class="kpi-delta">Col. N → O</div></div>
+      <div class="kpi-card danger"><div class="kpi-label">NFs c/ Divergência</div><div class="kpi-value" id="kpiDivNFs">—</div><div class="kpi-delta">Q ou R preenchido</div></div>
+    </div>
+
+    <!-- CHARTS ROW 1 -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Divergência por Fornecedor (m³)</div>
+        <div class="chart-wrap" style="height:260px"><canvas id="chartFornDiv"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Volume: Comprado vs Físico por Material</div>
+        <div class="chart-wrap" style="height:260px"><canvas id="chartMatVol"></canvas></div>
+      </div>
+    </div>
+    <br>
+
+    <!-- CHARTS ROW 2 -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Distribuição de Status (NFs)</div>
+        <div class="chart-wrap" style="height:260px"><canvas id="chartStatus"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Lead Time de Inspeção — Dispersão por Fornecedor</div>
+        <div class="chart-wrap" style="height:260px"><canvas id="chartLead"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ TAB: FORNECEDORES ═══════════ -->
+  <div class="tab-content" id="tab-fornecedores">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Ranking de Fornecedores</span>
+        <span class="section-sub">Ordenado por divergência acumulada (Σ Col. S)</span>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="tblFornecedores">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th class="sortable">Fornecedor</th>
+                <th class="sortable">NFs</th>
+                <th class="sortable">Vol. Comprado</th>
+                <th class="sortable">Vol. Físico</th>
+                <th class="sortable">Δ Quantidade (m³)</th>
+                <th class="sortable">Δ Qualidade (m³)</th>
+                <th class="sortable">Divergência Total</th>
+                <th class="sortable">% Divergência</th>
+                <th class="sortable">Lead Time Médio</th>
+                <th>Classificação</th>
+              </tr>
+            </thead>
+            <tbody id="tblFornBody">
+              <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:30px">Clique em "↻ Atualizar Dados" para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Análise Comparativa</span>
+        <span class="section-sub">Volume e divergência por fornecedor</span>
+      </div>
+      <div class="card">
+        <div class="chart-wrap" style="height:320px"><canvas id="chartFornComp"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ TAB: MOVIGRAMA ═══════════ -->
+  <div class="tab-content" id="tab-movigrama">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Movigrama — Fluxo Diário de Volume</span>
+        <span class="section-sub">Entrada × Saída × Saldo Acumulado (aba basemovigrama)</span>
+      </div>
+
+      <!-- Movigrama KPIs -->
+      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="kpi-card info"><div class="kpi-label">Saldo Atual (m³)</div><div class="kpi-value" id="moviSaldo">—</div><div class="kpi-delta">Coluna E</div></div>
+        <div class="kpi-card ok"><div class="kpi-label">Total Entrado</div><div class="kpi-value" id="moviEntrada">—</div><div class="kpi-delta">Σ Coluna B</div></div>
+        <div class="kpi-card warn"><div class="kpi-label">Total Saído</div><div class="kpi-value" id="moviSaida">—</div><div class="kpi-delta">Σ Coluna C</div></div>
+        <div class="kpi-card danger"><div class="kpi-label">Dias c/ Saldo Alto</div><div class="kpi-value" id="moviDiasAltos">—</div><div class="kpi-delta">Acima da média</div></div>
+      </div>
+
+      <div class="card">
+        <div class="movi-legend">
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--ok)"></div> Entrada</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--warn)"></div> Saída</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--info)"></div> Saldo Acumulado</div>
+        </div>
+        <div class="chart-wrap" style="height:340px"><canvas id="chartMovigrama"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Detalhamento Diário</span>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="tblMovi">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Entrada (m³)</th>
+                <th>Saída (m³)</th>
+                <th>Saldo (m³)</th>
+                <th>Variação</th>
+                <th>Alerta</th>
+              </tr>
+            </thead>
+            <tbody id="tblMoviBody">
+              <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Clique em "↻ Atualizar Dados" para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ TAB: NFs DETALHES ═══════════ -->
+  <div class="tab-content" id="tab-nfs">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Detalhamento de Notas Fiscais</span>
+        <span class="section-sub">Aba Acompanhamento_r1 — todas as linhas com filtros aplicados</span>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="tblNFs">
+            <thead>
+              <tr>
+                <th>Fornecedor</th>
+                <th>Material</th>
+                <th>NF</th>
+                <th>OC</th>
+                <th>Descrição</th>
+                <th>Esp.</th>
+                <th>Larg.</th>
+                <th>Comp.</th>
+                <th>Vol. Comp.</th>
+                <th>Vol. Fís.</th>
+                <th>Prev. Compras</th>
+                <th>Entrada Log.</th>
+                <th>Inspeção</th>
+                <th>Δ Qual.</th>
+                <th>Δ Qtd.</th>
+                <th>Δ Total</th>
+                <th>Lead Time</th>
+                <th>Status</th>
+                <th>Tratativa</th>
+              </tr>
+            </thead>
+            <tbody id="tblNFsBody">
+              <tr><td colspan="19" style="text-align:center;color:var(--muted);padding:30px">Clique em "↻ Atualizar Dados" para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ TAB: ANÁLISE & LOOKER ═══════════ -->
+  <div class="tab-content" id="tab-analise">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">1. Performance de Fornecedores</span>
+        <span class="section-sub">Como cruzar colunas A, Q e R para ranqueamento</span>
+      </div>
+
+      <div class="analysis-block">
+        <div class="analysis-title">Lógica de Ranqueamento</div>
+        <div class="analysis-text">
+          O ranqueamento combina as colunas <strong>A (Fornecedor)</strong>, <strong>Q (Divergência de Qualidade)</strong> e <strong>R (Falta de Quantidade)</strong> via agrupamento por fornecedor.
+          Para cada fornecedor, calcule: número de ocorrências com Q ≠ 0, número de ocorrências com R ≠ 0, soma da coluna S (divergência total) e percentual = (Σ S / Σ K) × 100.
+          Fornecedores com <strong>% Divergência > 5%</strong> devem ser sinalizados como críticos; entre 2–5% como atenção; abaixo de 2% como adequado.
+        </div>
+        <div class="formula-box">% Divergência = SUM(S) / SUM(K) × 100  [agrupado por Fornecedor (A)]</div>
+        <div class="formula-box">Score de Risco = (NFs_com_Q_preenchido × 2) + (NFs_com_R_preenchido × 1) + (% Divergência × 0.5)</div>
+      </div>
+
+      <div class="analysis-block warn">
+        <div class="analysis-title">Critério de Penalização</div>
+        <div class="analysis-text">
+          Divergência de <strong>qualidade (Q)</strong> deve pesar o dobro da quantidade (R), pois implica rejeição de lote, retrabalho e risco de produção.
+          Fornecedores com ocorrências recorrentes de qualidade em janelas de 30 dias devem ser escalados para reavaliação de homologação.
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">2. Eficiência Operacional — Gargalos</span>
+        <span class="section-sub">Lead Time de Inspeção e impacto no Movigrama</span>
+      </div>
+
+      <div class="analysis-block">
+        <div class="analysis-title">Cálculo do Lead Time de Inspeção</div>
+        <div class="analysis-text">
+          O tempo entre <strong>Coluna N (Entrada Logística)</strong> e <strong>Coluna O (Inspeção e Liberação)</strong> representa o gargalo operacional do setor.
+          Cada dia de atraso na liberação incrementa diretamente o <strong>Saldo Acumulado</strong> do Movigrama (coluna E da aba basemovigrama), pois o volume entrou mas ainda não saiu.
+        </div>
+        <div class="formula-box">Lead Time = O - N  (em dias corridos)</div>
+        <div class="formula-box">Impacto no Saldo = Σ Volume_Não_Liberado = Σ K [onde O está vazia ou Status ≠ Liberado]</div>
+      </div>
+
+      <div class="analysis-block danger">
+        <div class="analysis-title">Alerta Crítico — Saldo Represado</div>
+        <div class="analysis-text">
+          Se o Lead Time médio superar <strong>3 dias</strong>, o saldo acumulado cresce de forma não planejada, comprometendo a capacidade de armazenagem e a previsibilidade de abastecimento da produção.
+          Monitorar semanalmente: NFs com mais de 5 dias sem liberação devem gerar acionamento automático de Compras.
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">3. Saúde do Processo — Coluna S</span>
+        <span class="section-sub">O que o Σ divergências representa financeiramente</span>
+      </div>
+
+      <div class="analysis-block">
+        <div class="analysis-title">Interpretação Operacional da Coluna S</div>
+        <div class="analysis-text">
+          A <strong>Coluna S</strong> é a somatória das diferenças (qualidade + quantidade) por linha de NF.
+          Seu acumulado representa o <strong>volume "fantasma"</strong> — pago mas não utilizável ou não recebido.
+          Para transformar em prejuízo financeiro: multiplique Σ S pelo custo médio por m³ do material correspondente.
+          Materiais com maior Σ S e maior custo unitário devem ter tratativa prioritária em Compras.
+        </div>
+        <div class="formula-box">Prejuízo Estimado (R$) = Σ S × Custo_Médio_m³ [agrupado por Material (B)]</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">4. Campos Calculados — Looker Studio</span>
+        <span class="section-sub">Fórmulas recomendadas para criação no Looker Studio</span>
+      </div>
+
+      <div class="field-grid">
+        <div class="field-card">
+          <div class="field-name">% Aproveitamento</div>
+          <div class="field-formula">P / K * 100</div>
+          <div class="field-desc">Percentual do volume comprado efetivamente aprovado. Meta: ≥ 98%.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Lead Time Inspeção</div>
+          <div class="field-formula">DATE_DIFF(O, N, DAY)</div>
+          <div class="field-desc">Dias entre entrada logística e liberação. SLA interno recomendado: ≤ 3 dias.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Lead Time Atendimento</div>
+          <div class="field-formula">DATE_DIFF(N, M, DAY)</div>
+          <div class="field-desc">Dias entre a previsão de Compras e a entrada real. Mede pontualidade do fornecedor.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">% Divergência</div>
+          <div class="field-formula">S / K * 100</div>
+          <div class="field-desc">Percentual de volume divergente sobre o comprado. Alerta: > 5%.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Flag Crítico</div>
+          <div class="field-formula">IF(S / K > 0.05, "CRÍTICO", IF(S / K > 0.02, "ATENÇÃO", "OK"))</div>
+          <div class="field-desc">Classificação automática por nível de divergência.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Status Liberação</div>
+          <div class="field-formula">IF(ISNULL(O), "PENDENTE", "LIBERADO")</div>
+          <div class="field-desc">Simplifica filtro de NFs pendentes de inspeção.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Dias em Aberto</div>
+          <div class="field-formula">IF(ISNULL(O), DATE_DIFF(TODAY(), N, DAY), 0)</div>
+          <div class="field-desc">Contagem de dias aguardando inspeção para NFs ainda não liberadas.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Volume Represado</div>
+          <div class="field-formula">IF(ISNULL(O), K, 0)</div>
+          <div class="field-desc">Volume em espera de liberação — alimenta o saldo do Movigrama.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Tipo de Divergência</div>
+          <div class="field-formula">IF(Q > 0 AND R > 0, "Qualidade+Qtd", IF(Q > 0, "Qualidade", IF(R > 0, "Quantidade", "Sem Divergência")))</div>
+          <div class="field-desc">Classificação para análise de causa raiz.</div>
+        </div>
+        <div class="field-card">
+          <div class="field-name">Score de Risco Fornecedor</div>
+          <div class="field-formula">AVG(S / K) * 100 + AVG(DATE_DIFF(O,N,DAY))</div>
+          <div class="field-desc">Métrica composta para ranking de fornecedores no Looker.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════ TAB: PLANO DE AÇÃO ═══════════ -->
+  <div class="tab-content" id="tab-plano">
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Lógica de Priorização para Compras</span>
+        <span class="section-sub">Baseado nas colunas AE (Tratativa) e AF (Ação Final)</span>
+      </div>
+
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-title">Critérios de Prioridade</div>
+        <div class="priority-row">
+          <div class="priority-num">P1</div>
+          <div class="priority-content">
+            <div class="priority-title">Crítico — Ação Imediata (< 48h)</div>
+            <div class="priority-desc">NFs onde: Coluna S > 5% do Volume K <strong>E</strong> AF está vazia <strong>E</strong> Dias em Aberto > 5. Risco direto de parada de produção. Escalar para Gerência de Compras.</div>
+          </div>
+          <span class="badge badge-danger">URGENTE</span>
+        </div>
+        <div class="priority-row">
+          <div class="priority-num p2">P2</div>
+          <div class="priority-content">
+            <div class="priority-title">Alta — Tratativa Iniciada mas Não Concluída</div>
+            <div class="priority-desc">NFs onde: AE (Tratativa) está preenchida mas AF (Ação Final) está vazia <strong>OU</strong> Status = "Pendente Compras". Acompanhar resposta do fornecedor em até 3 dias.</div>
+          </div>
+          <span class="badge badge-warn">ALTA</span>
+        </div>
+        <div class="priority-row">
+          <div class="priority-num p3">P3</div>
+          <div class="priority-content">
+            <div class="priority-title">Monitoramento — Divergência Leve</div>
+            <div class="priority-desc">NFs com S entre 2–5% do Volume K, tratativa em andamento e AF preenchida. Registrar no histórico do fornecedor para análise de padrão trimestral.</div>
+          </div>
+          <span class="badge badge-ok">MONIT.</span>
+        </div>
+        <div class="priority-row">
+          <div class="priority-num" style="background:var(--muted)">P4</div>
+          <div class="priority-content">
+            <div class="priority-title">Encerrado — Documentar</div>
+            <div class="priority-desc">NFs com AF preenchida, Status = Liberado e S dentro da tolerância. Manter registro para auditoria e cálculo de KPIs históricos de fornecedor.</div>
+          </div>
+          <span class="badge badge-neutral">ENCERR.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Fluxo Recomendado de Tratativa</span>
+      </div>
+
+      <div class="two-col">
+        <div class="analysis-block danger">
+          <div class="analysis-title">Divergência de Qualidade (Col. Q)</div>
+          <div class="analysis-text">
+            <strong>1.</strong> Registrar no link da inspeção (Col. W) com foto e medições.<br>
+            <strong>2.</strong> Preencher Col. AB (Obs. Recebimento) com descrição técnica.<br>
+            <strong>3.</strong> Acionar Compras via Col. V (marcador) para abertura de NCR.<br>
+            <strong>4.</strong> Compras preenche Col. AD (Tratativa) com posição do fornecedor.<br>
+            <strong>5.</strong> Ação Final (Col. AF): Devolução, Desconto em NF ou Reposição.
+          </div>
+        </div>
+
+        <div class="analysis-block warn">
+          <div class="analysis-title">Falta de Quantidade (Col. R)</div>
+          <div class="analysis-text">
+            <strong>1.</strong> Conferir volume físico (Col. P) e calcular diferença com Col. K.<br>
+            <strong>2.</strong> Registrar divergência na Col. R e sinalizar Col. V.<br>
+            <strong>3.</strong> Compras solicita complemento ao fornecedor ou novo pedido parcial.<br>
+            <strong>4.</strong> Avaliar impacto no Movigrama: volume faltante impacta saldo esperado.<br>
+            <strong>5.</strong> Ação Final (Col. AF): Complemento, Crédito ou Reemissão de NF.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">NFs Aguardando Ação</span>
+        <span class="section-sub">Filtradas por prioridade — dados ao vivo após carregar a planilha</span>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="tblAcoes">
+            <thead>
+              <tr>
+                <th>Prioridade</th>
+                <th>Fornecedor</th>
+                <th>NF</th>
+                <th>Material</th>
+                <th>Δ Total (m³)</th>
+                <th>% Div.</th>
+                <th>Dias em Aberto</th>
+                <th>Obs. Recebimento</th>
+                <th>Tratativa</th>
+                <th>Ação Final</th>
+                <th>Link Inspeção</th>
+              </tr>
+            </thead>
+            <tbody id="tblAcoesBody">
+              <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:30px">Clique em "↻ Atualizar Dados" para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG — edite apenas esta seção
+// ═══════════════════════════════════════════════════
+const SHEET_ID = '1MFnPmUfxxzE1gjJzGVlVmdFOaHI-TmqonLnRGQNNQC8';
+const GID_ACOMPANHAMENTO = '0'; // gid da aba Acompanhamento_r1 (verifique na URL)
+const GID_MOVIGRAMA      = ''; // gid da aba basemovigrama (verifique na URL da planilha)
+
+// Mapeamento colunas (0-indexed)
+const COL = {
+  FORNECEDOR: 0,   // A
+  MATERIAL:   1,   // B
+  NF:         2,   // C
+  OC:         3,   // D
+  ITEM:       4,   // E
+  DESC:       5,   // F
+  ESP:        7,   // H
+  LARG:       8,   // I
+  COMP:       9,   // J
+  VOL_COMP:   10,  // K
+  VOL_FIS:    15,  // P
+  PREV_COMP:  12,  // M
+  ENT_LOG:    13,  // N
+  INSP:       14,  // O
+  DIV_QUAL:   16,  // Q
+  DIV_QTD:    17,  // R
+  DIV_TOTAL:  18,  // S
+  STATUS:     20,  // U
+  MARCADOR:   21,  // V
+  LINK_INSP:  22,  // W
+  OBS_REC:    27,  // AB
+  OBS_COMP:   29,  // AD
+  TRATATIVA:  30,  // AE
+  ACAO_FINAL: 31,  // AF
+};
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let rawData = [];
+let moviData = [];
+let filteredData = [];
+let charts = {};
+
+// ═══════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// DATA LOADING
+// ═══════════════════════════════════════════════════
+async function loadFromSheets() {
+  document.getElementById('lastUpdate').textContent = 'Carregando…';
+  const urlAcomp = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_ACOMPANHAMENTO}`;
+  
+  try {
+    const resp = await fetch(urlAcomp);
+    if (!resp.ok) throw new Error('Erro ao buscar planilha');
+    const text = await resp.text();
+    rawData = parseCSV(text).slice(1); // remove header
+    
+    filteredData = [...rawData];
+    populateFilters();
+    renderAll();
+
+    // Movigrama
+    if (GID_MOVIGRAMA) {
+      const urlMovi = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_MOVIGRAMA}`;
+      const rMovi = await fetch(urlMovi);
+      const tMovi = await rMovi.text();
+      moviData = parseCSV(tMovi).slice(1);
+      renderMovigrama();
+    }
+
+    document.getElementById('lastUpdate').textContent = 'Atualizado ' + new Date().toLocaleTimeString('pt-BR');
+  } catch(e) {
+    document.getElementById('lastUpdate').textContent = 'Erro: planilha não pública?';
+    loadDemoData();
+  }
+}
+
+function parseCSV(text) {
+  const lines = [];
+  let row = [], cell = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { row.push(cell.trim()); cell = ''; }
+    else if ((c === '\n' || c === '\r') && !inQ) {
+      if (cell !== '' || row.length) { row.push(cell.trim()); lines.push(row); row = []; cell = ''; }
+      if (c === '\r' && text[i+1] === '\n') i++;
+    } else { cell += c; }
+  }
+  if (cell !== '' || row.length) { row.push(cell.trim()); lines.push(row); }
+  return lines;
+}
+
+function loadDemoData() {
+  const fornecedores = ['MaderLux SA','Pinus Brasil','CedroTec','Wood Solutions','FloresTal'];
+  const materiais = ['MDF 15mm','Pinus Bruto','Cedro','OSB 18mm','Compensado'];
+  const status = ['Liberado','Pendente Inspeção','Não Conforme','Pendente Compras'];
+  
+  rawData = [];
+  for (let i = 0; i < 80; i++) {
+    const forn = fornecedores[i % fornecedores.length];
+    const mat  = materiais[Math.floor(Math.random() * materiais.length)];
+    const volC = (Math.random() * 50 + 10).toFixed(2);
+    const divT = (Math.random() < 0.3) ? (Math.random() * volC * 0.1).toFixed(2) : '0';
+    const volF = (parseFloat(volC) - parseFloat(divT)).toFixed(2);
+    const dateN = new Date(2025, 0, Math.floor(Math.random() * 180) + 1);
+    const dateO = new Date(dateN.getTime() + (Math.floor(Math.random() * 7) + 1) * 86400000);
+    const row = Array(40).fill('');
+    row[COL.FORNECEDOR] = forn;
+    row[COL.MATERIAL]   = mat;
+    row[COL.NF]         = 'NF-' + String(10000 + i);
+    row[COL.OC]         = 'OC-' + String(5000 + i);
+    row[COL.DESC]       = mat + ' ' + (Math.random() > 0.5 ? '2,44x1,22' : '1,82x0,91');
+    row[COL.VOL_COMP]   = volC;
+    row[COL.VOL_FIS]    = volF;
+    row[COL.PREV_COMP]  = fmtDate(new Date(dateN.getTime() - 5 * 86400000));
+    row[COL.ENT_LOG]    = fmtDate(dateN);
+    row[COL.INSP]       = Math.random() > 0.2 ? fmtDate(dateO) : '';
+    row[COL.DIV_QUAL]   = (Math.random() < 0.15) ? (Math.random() * 3).toFixed(2) : '0';
+    row[COL.DIV_QTD]    = (Math.random() < 0.2)  ? (Math.random() * 2).toFixed(2) : '0';
+    row[COL.DIV_TOTAL]  = divT;
+    row[COL.STATUS]     = status[Math.floor(Math.random() * status.length)];
+    row[COL.TRATATIVA]  = parseFloat(divT) > 0 ? 'Acionado fornecedor para esclarecimento.' : '';
+    row[COL.ACAO_FINAL] = parseFloat(divT) > 0 && Math.random() > 0.5 ? 'Nota de débito emitida.' : '';
+    rawData.push(row);
+  }
+
+  // Demo movigrama
+  moviData = [];
+  let saldo = 0;
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(2025, 0, i + 1);
+    const ent = parseFloat((Math.random() * 30 + 5).toFixed(2));
+    const sai = parseFloat((Math.random() * 25 + 5).toFixed(2));
+    saldo = Math.max(0, saldo + ent - sai);
+    moviData.push([fmtDate(d), ent.toFixed(2), sai.toFixed(2), '', saldo.toFixed(2)]);
+  }
+
+  filteredData = [...rawData];
+  populateFilters();
+  renderAll();
+  renderMovigrama();
+  document.getElementById('lastUpdate').textContent = 'Dados Demo — ' + new Date().toLocaleTimeString('pt-BR');
+}
+
+function fmtDate(d) {
+  if (!(d instanceof Date)) return '';
+  return d.toISOString().split('T')[0];
+}
+
+// ═══════════════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════════════
+function populateFilters() {
+  const setOpts = (id, vals) => {
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todos</option>';
+    [...new Set(vals)].filter(Boolean).sort().forEach(v => {
+      const o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+  };
+  setOpts('fFornecedor', rawData.map(r => r[COL.FORNECEDOR]));
+  setOpts('fMaterial',   rawData.map(r => r[COL.MATERIAL]));
+  setOpts('fStatus',     rawData.map(r => r[COL.STATUS]));
+}
+
+function applyFilters() {
+  const forn   = document.getElementById('fFornecedor').value;
+  const mat    = document.getElementById('fMaterial').value;
+  const dFrom  = document.getElementById('fDateFrom').value;
+  const dTo    = document.getElementById('fDateTo').value;
+  const status = document.getElementById('fStatus').value;
+
+  filteredData = rawData.filter(r => {
+    if (forn   && r[COL.FORNECEDOR] !== forn) return false;
+    if (mat    && r[COL.MATERIAL]   !== mat)  return false;
+    if (status && r[COL.STATUS]     !== status) return false;
+    const d = r[COL.ENT_LOG];
+    if (dFrom && d && d < dFrom) return false;
+    if (dTo   && d && d > dTo)   return false;
+    return true;
+  });
+  renderAll();
+}
+
+function clearFilters() {
+  ['fFornecedor','fMaterial','fStatus'].forEach(id => document.getElementById(id).value = '');
+  ['fDateFrom','fDateTo'].forEach(id => document.getElementById(id).value = '');
+  filteredData = [...rawData];
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════════
+function renderAll() {
+  renderKPIs();
+  renderChartFornDiv();
+  renderChartMatVol();
+  renderChartStatus();
+  renderChartLead();
+  renderTableFornecedores();
+  renderChartFornComp();
+  renderTableNFs();
+  renderTableAcoes();
+}
+
+// ─── KPIs ───
+function renderKPIs() {
+  const data = filteredData;
+  const n     = data.length;
+  const vComp = data.reduce((a, r) => a + (parseFloat(r[COL.VOL_COMP]) || 0), 0);
+  const vFis  = data.reduce((a, r) => a + (parseFloat(r[COL.VOL_FIS])  || 0), 0);
+  const divT  = data.reduce((a, r) => a + (parseFloat(r[COL.DIV_TOTAL]) || 0), 0);
+  const leads = data.filter(r => r[COL.ENT_LOG] && r[COL.INSP]).map(r => {
+    const d1 = new Date(r[COL.ENT_LOG]), d2 = new Date(r[COL.INSP]);
+    return (d2 - d1) / 86400000;
+  });
+  const avgLead = leads.length ? (leads.reduce((a,b) => a+b,0) / leads.length).toFixed(1) : '—';
+  const divNFs = data.filter(r => parseFloat(r[COL.DIV_TOTAL]) > 0).length;
+
+  document.getElementById('kpiNFs').textContent    = n;
+  document.getElementById('kpiVolComp').textContent = fmt1(vComp);
+  document.getElementById('kpiVolFis').textContent  = fmt1(vFis);
+  document.getElementById('kpiDiv').textContent     = fmt1(divT);
+  document.getElementById('kpiLead').textContent    = avgLead;
+  document.getElementById('kpiDivNFs').textContent  = divNFs;
+}
+
+// ─── CHART: Divergência por Fornecedor ───
+function renderChartFornDiv() {
+  const agg = {};
+  filteredData.forEach(r => {
+    const f = r[COL.FORNECEDOR] || 'N/D';
+    agg[f] = (agg[f] || 0) + (parseFloat(r[COL.DIV_TOTAL]) || 0);
+  });
+  const sorted = Object.entries(agg).sort((a,b) => b[1]-a[1]).slice(0, 10);
+  drawBar('chartFornDiv', sorted.map(s=>s[0]), sorted.map(s=>s[1]), 'Divergência (m³)', 'rgba(224,92,92,0.7)', 'rgba(224,92,92,1)');
+}
+
+// ─── CHART: Vol Comprado vs Físico por Material ───
+function renderChartMatVol() {
+  const aggC = {}, aggF = {};
+  filteredData.forEach(r => {
+    const m = r[COL.MATERIAL] || 'N/D';
+    aggC[m] = (aggC[m] || 0) + (parseFloat(r[COL.VOL_COMP]) || 0);
+    aggF[m] = (aggF[m] || 0) + (parseFloat(r[COL.VOL_FIS])  || 0);
+  });
+  const labels = Object.keys(aggC).sort();
+  destroyChart('chartMatVol');
+  charts['chartMatVol'] = new Chart(document.getElementById('chartMatVol'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Comprado', data: labels.map(l => aggC[l] || 0), backgroundColor: 'rgba(92,155,224,0.6)', borderColor: 'rgba(92,155,224,1)', borderWidth: 1 },
+        { label: 'Físico',   data: labels.map(l => aggF[l] || 0), backgroundColor: 'rgba(92,184,122,0.6)', borderColor: 'rgba(92,184,122,1)', borderWidth: 1 }
+      ]
+    },
+    options: chartOpts('m³')
+  });
+}
+
+// ─── CHART: Status ───
+function renderChartStatus() {
+  const agg = {};
+  filteredData.forEach(r => { const s = r[COL.STATUS] || 'N/D'; agg[s] = (agg[s] || 0) + 1; });
+  const labels = Object.keys(agg);
+  const colors = labels.map((_, i) => ['rgba(92,155,224,0.7)','rgba(92,184,122,0.7)','rgba(224,92,92,0.7)','rgba(224,154,60,0.7)','rgba(122,128,153,0.7)'][i % 5]);
+  destroyChart('chartStatus');
+  charts['chartStatus'] = new Chart(document.getElementById('chartStatus'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: labels.map(l => agg[l]), backgroundColor: colors, borderColor: '#181c26', borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#7a8099', font: { family: 'DM Mono', size: 11 } } } }
+    }
+  });
+}
+
+// ─── CHART: Lead Time ───
+function renderChartLead() {
+  const agg = {};
+  filteredData.forEach(r => {
+    if (!r[COL.ENT_LOG] || !r[COL.INSP]) return;
+    const f = r[COL.FORNECEDOR] || 'N/D';
+    const lead = (new Date(r[COL.INSP]) - new Date(r[COL.ENT_LOG])) / 86400000;
+    if (!agg[f]) agg[f] = [];
+    agg[f].push(lead);
+  });
+  const labels = Object.keys(agg).sort();
+  const avgs   = labels.map(f => { const a = agg[f]; return (a.reduce((x,y)=>x+y,0)/a.length).toFixed(1); });
+  drawBar('chartLead', labels, avgs, 'Lead Time médio (dias)', 'rgba(200,169,110,0.6)', 'rgba(200,169,110,1)');
+}
+
+// ─── TABLE: Fornecedores ───
+function renderTableFornecedores() {
+  const agg = {};
+  filteredData.forEach(r => {
+    const f = r[COL.FORNECEDOR] || 'N/D';
+    if (!agg[f]) agg[f] = { nfs: 0, vComp: 0, vFis: 0, dQual: 0, dQtd: 0, dTot: 0, leads: [] };
+    const a = agg[f];
+    a.nfs++;
+    a.vComp += parseFloat(r[COL.VOL_COMP])  || 0;
+    a.vFis  += parseFloat(r[COL.VOL_FIS])   || 0;
+    a.dQual += parseFloat(r[COL.DIV_QUAL])  || 0;
+    a.dQtd  += parseFloat(r[COL.DIV_QTD])   || 0;
+    a.dTot  += parseFloat(r[COL.DIV_TOTAL]) || 0;
+    if (r[COL.ENT_LOG] && r[COL.INSP]) {
+      a.leads.push((new Date(r[COL.INSP]) - new Date(r[COL.ENT_LOG])) / 86400000);
+    }
+  });
+
+  const rows = Object.entries(agg).sort((a,b) => b[1].dTot - a[1].dTot);
+  const tbody = document.getElementById('tblFornBody');
+  tbody.innerHTML = '';
+
+  rows.forEach(([forn, a], i) => {
+    const pct   = a.vComp > 0 ? (a.dTot / a.vComp * 100).toFixed(1) : '0.0';
+    const lead  = a.leads.length ? (a.leads.reduce((x,y)=>x+y,0)/a.leads.length).toFixed(1) : '—';
+    const cls   = parseFloat(pct) > 5 ? 'badge-danger' : parseFloat(pct) > 2 ? 'badge-warn' : 'badge-ok';
+    const label = parseFloat(pct) > 5 ? 'CRÍTICO' : parseFloat(pct) > 2 ? 'ATENÇÃO' : 'ADEQUADO';
+    const pctBar = Math.min(100, parseFloat(pct) * 5);
+    const barColor = parseFloat(pct) > 5 ? 'var(--danger)' : parseFloat(pct) > 2 ? 'var(--warn)' : 'var(--ok)';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--muted);font-family:var(--font-mono)">${i+1}</td>
+      <td style="font-weight:600">${forn}</td>
+      <td>${a.nfs}</td>
+      <td>${fmt1(a.vComp)}</td>
+      <td>${fmt1(a.vFis)}</td>
+      <td style="color:var(--warn)">${fmt1(a.dQtd)}</td>
+      <td style="color:var(--danger)">${fmt1(a.dQual)}</td>
+      <td style="color:var(--danger);font-weight:600">${fmt1(a.dTot)}</td>
+      <td>
+        <div style="min-width:80px">
+          <div class="progress-bar" style="margin-bottom:4px"><div class="progress-fill" style="width:${pctBar}%;background:${barColor}"></div></div>
+          <span style="font-family:var(--font-mono);font-size:11px">${pct}%</span>
+        </div>
+      </td>
+      <td style="font-family:var(--font-mono)">${lead} d</td>
+      <td><span class="badge ${cls}">${label}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  if (!rows.length) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Sem dados</td></tr>';
+}
+
+// ─── CHART: Fornecedor Comp ───
+function renderChartFornComp() {
+  const agg = {};
+  filteredData.forEach(r => {
+    const f = r[COL.FORNECEDOR] || 'N/D';
+    if (!agg[f]) agg[f] = { vComp: 0, dTot: 0 };
+    agg[f].vComp += parseFloat(r[COL.VOL_COMP])  || 0;
+    agg[f].dTot  += parseFloat(r[COL.DIV_TOTAL]) || 0;
+  });
+  const labels = Object.keys(agg).sort((a,b) => agg[b].dTot - agg[a].dTot);
+  destroyChart('chartFornComp');
+  charts['chartFornComp'] = new Chart(document.getElementById('chartFornComp'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Vol. Comprado', data: labels.map(l => agg[l].vComp), backgroundColor: 'rgba(92,155,224,0.5)', borderColor: 'rgba(92,155,224,1)', borderWidth: 1 },
+        { label: 'Divergência',   data: labels.map(l => agg[l].dTot),  backgroundColor: 'rgba(224,92,92,0.7)',  borderColor: 'rgba(224,92,92,1)',  borderWidth: 1 }
+      ]
+    },
+    options: chartOpts('m³')
+  });
+}
+
+// ─── MOVIGRAMA ───
+function renderMovigrama() {
+  const labels = moviData.map(r => r[0]);
+  const ent    = moviData.map(r => parseFloat(r[1]) || 0);
+  const sai    = moviData.map(r => parseFloat(r[2]) || 0);
+  const saldo  = moviData.map(r => parseFloat(r[4]) || 0);
+
+  const totalEnt  = ent.reduce((a,b) => a+b, 0);
+  const totalSai  = sai.reduce((a,b) => a+b, 0);
+  const curSaldo  = saldo[saldo.length - 1] || 0;
+  const avgSaldo  = saldo.reduce((a,b) => a+b, 0) / (saldo.length || 1);
+  const diasAltos = saldo.filter(s => s > avgSaldo).length;
+
+  document.getElementById('moviSaldo').textContent   = fmt1(curSaldo);
+  document.getElementById('moviEntrada').textContent = fmt1(totalEnt);
+  document.getElementById('moviSaida').textContent   = fmt1(totalSai);
+  document.getElementById('moviDiasAltos').textContent = diasAltos;
+
+  destroyChart('chartMovigrama');
+  charts['chartMovigrama'] = new Chart(document.getElementById('chartMovigrama'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { type: 'bar',  label: 'Entrada',         data: ent,   backgroundColor: 'rgba(92,184,122,0.5)',  borderColor: 'rgba(92,184,122,1)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'bar',  label: 'Saída',            data: sai,   backgroundColor: 'rgba(224,154,60,0.5)',  borderColor: 'rgba(224,154,60,1)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'line', label: 'Saldo Acumulado',  data: saldo, borderColor: 'rgba(92,155,224,1)', backgroundColor: 'rgba(92,155,224,0.08)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#7a8099', font: { family: 'DM Mono', size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 20 }, grid: { color: '#2a2f42' } },
+        y:  { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#2a2f42' }, title: { display: true, text: 'm³ diário', color: '#7a8099', font: { size: 10 } } },
+        y2: { position: 'right', ticks: { color: 'rgba(92,155,224,0.8)', font: { family: 'DM Mono', size: 10 } }, grid: { display: false }, title: { display: true, text: 'Saldo (m³)', color: 'rgba(92,155,224,0.8)', font: { size: 10 } } }
+      }
+    }
+  });
+
+  // Table
+  const tbody = document.getElementById('tblMoviBody');
+  tbody.innerHTML = '';
+  moviData.slice().reverse().forEach(r => {
+    const e = parseFloat(r[1]) || 0;
+    const s = parseFloat(r[2]) || 0;
+    const bal = parseFloat(r[4]) || 0;
+    const var_ = e - s;
+    const alerta = bal > avgSaldo * 1.5 ? '<span class="badge badge-danger">ALTO</span>' :
+                   bal > avgSaldo       ? '<span class="badge badge-warn">ATENÇÃO</span>' :
+                   '<span class="badge badge-ok">NORMAL</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-family:var(--font-mono)">${r[0]}</td>
+      <td style="color:var(--ok)">${fmt1(e)}</td>
+      <td style="color:var(--warn)">${fmt1(s)}</td>
+      <td style="font-weight:600">${fmt1(bal)}</td>
+      <td style="color:${var_ >= 0 ? 'var(--ok)' : 'var(--danger)'}">${var_ >= 0 ? '+' : ''}${fmt1(var_)}</td>
+      <td>${alerta}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── TABLE: NFs ───
+function renderTableNFs() {
+  const tbody = document.getElementById('tblNFsBody');
+  tbody.innerHTML = '';
+  const show = filteredData.slice(0, 200);
+  show.forEach(r => {
+    const lead = (r[COL.ENT_LOG] && r[COL.INSP])
+      ? ((new Date(r[COL.INSP]) - new Date(r[COL.ENT_LOG])) / 86400000).toFixed(0) + 'd'
+      : '—';
+    const divT = parseFloat(r[COL.DIV_TOTAL]) || 0;
+    const cls  = divT > 5 ? 'badge-danger' : divT > 0 ? 'badge-warn' : 'badge-ok';
+    const st   = r[COL.STATUS] || '—';
+    const stCls = st.toLowerCase().includes('liber') ? 'badge-ok' :
+                  st.toLowerCase().includes('conf')  ? 'badge-danger' :
+                  st.toLowerCase().includes('pend')  ? 'badge-warn' : 'badge-neutral';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-weight:600">${r[COL.FORNECEDOR]}</td>
+      <td>${r[COL.MATERIAL]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.NF]}</td>
+      <td style="font-family:var(--font-mono);color:var(--muted)">${r[COL.OC]}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[COL.DESC]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.ESP]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.LARG]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.COMP]}</td>
+      <td>${r[COL.VOL_COMP]}</td>
+      <td>${r[COL.VOL_FIS]}</td>
+      <td style="font-family:var(--font-mono);color:var(--muted)">${r[COL.PREV_COMP]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.ENT_LOG]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.INSP]}</td>
+      <td style="color:var(--danger)">${r[COL.DIV_QUAL] || '—'}</td>
+      <td style="color:var(--warn)">${r[COL.DIV_QTD]  || '—'}</td>
+      <td><span class="badge ${cls}">${r[COL.DIV_TOTAL] || '0'}</span></td>
+      <td style="font-family:var(--font-mono)">${lead}</td>
+      <td><span class="badge ${stCls}">${st}</span></td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r[COL.TRATATIVA] || '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  if (!show.length) tbody.innerHTML = '<tr><td colspan="19" style="text-align:center;color:var(--muted);padding:20px">Sem dados</td></tr>';
+}
+
+// ─── TABLE: Ações ───
+function renderTableAcoes() {
+  const today = new Date();
+  const tbody = document.getElementById('tblAcoesBody');
+  tbody.innerHTML = '';
+
+  const rows = filteredData
+    .filter(r => parseFloat(r[COL.DIV_TOTAL]) > 0 || !r[COL.INSP])
+    .map(r => {
+      const vC = parseFloat(r[COL.VOL_COMP]) || 1;
+      const dT = parseFloat(r[COL.DIV_TOTAL]) || 0;
+      const pct = (dT / vC * 100).toFixed(1);
+      const dias = r[COL.ENT_LOG] ? Math.floor((today - new Date(r[COL.ENT_LOG])) / 86400000) : 0;
+      const hasTrat = r[COL.TRATATIVA] && r[COL.TRATATIVA].trim();
+      const hasAF   = r[COL.ACAO_FINAL] && r[COL.ACAO_FINAL].trim();
+      let prio, prioLabel, prioCls;
+      if (parseFloat(pct) > 5 && !hasAF && dias > 5) { prio = 1; prioLabel = 'P1 — URGENTE';  prioCls = 'badge-danger'; }
+      else if (hasTrat && !hasAF)                     { prio = 2; prioLabel = 'P2 — ALTA';     prioCls = 'badge-warn'; }
+      else if (parseFloat(pct) > 2)                   { prio = 3; prioLabel = 'P3 — MONIT.';   prioCls = 'badge-info'; }
+      else                                             { prio = 4; prioLabel = 'P4 — OK';       prioCls = 'badge-ok'; }
+      return { r, pct, dias, prio, prioLabel, prioCls };
+    })
+    .sort((a,b) => a.prio - b.prio || b.dias - a.dias);
+
+  rows.forEach(({ r, pct, dias, prioLabel, prioCls }) => {
+    const link = r[COL.LINK_INSP] ? `<a href="${r[COL.LINK_INSP]}" target="_blank" style="color:var(--info)">Abrir</a>` : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge ${prioCls}">${prioLabel}</span></td>
+      <td style="font-weight:600">${r[COL.FORNECEDOR]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.NF]}</td>
+      <td>${r[COL.MATERIAL]}</td>
+      <td style="color:var(--danger);font-weight:600">${fmt1(parseFloat(r[COL.DIV_TOTAL]))}</td>
+      <td style="font-family:var(--font-mono)">${pct}%</td>
+      <td style="font-family:var(--font-mono);color:${dias > 5 ? 'var(--danger)' : 'var(--muted)'}">${dias}d</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r[COL.OBS_REC] || '—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[COL.TRATATIVA] || '—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r[COL.ACAO_FINAL] ? 'var(--ok)' : 'var(--muted)'}">${r[COL.ACAO_FINAL] || '—'}</td>
+      <td>${link}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  if (!rows.length) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Sem pendências</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════
+// CHART HELPERS
+// ═══════════════════════════════════════════════════
+function drawBar(id, labels, data, label, bg, border) {
+  destroyChart(id);
+  charts[id] = new Chart(document.getElementById(id), {
+    type: 'bar',
+    data: { labels, datasets: [{ label, data, backgroundColor: bg, borderColor: border, borderWidth: 1 }] },
+    options: chartOpts()
+  });
+}
+
+function chartOpts(unit) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#7a8099', font: { family: 'DM Mono', size: 11 } } } },
+    scales: {
+      x: { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 }, maxRotation: 35 }, grid: { color: '#2a2f42' } },
+      y: { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#2a2f42' } }
+    }
+  };
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function fmt1(n) { return (Math.round(parseFloat(n) * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+
+// ═══════════════════════════════════════════════════
+// INIT — carrega demo na primeira visita
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  loadDemoData();
+  document.getElementById('lastUpdate').textContent = 'Demo — clique ↻ para dados reais';
+});
+</script>
+</body>
+</html>
