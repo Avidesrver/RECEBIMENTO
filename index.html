@@ -1128,6 +1128,7 @@ function applyFilters() {
   const dTo    = document.getElementById('fDateTo').value;
   const status = document.getElementById('fStatus').value;
 
+  // Filtra os dados da Tabela Principal
   filteredData = rawData.filter(r => {
     if (forn   && r[COL.FORNECEDOR] !== forn) return false;
     if (mat    && r[COL.MATERIAL]   !== mat)  return false;
@@ -1137,9 +1138,19 @@ function applyFilters() {
     if (dTo   && d && d > dTo)   return false;
     return true;
   });
-  renderAll();
-}
 
+  // NOVA LÓGICA: Filtra os dados do Movigrama baseado nas mesmas datas
+  // Note que o Movigrama não filtra por Fornecedor/Material (pois ele é um resumo consolidado)
+  const filteredMovi = moviData.filter(r => {
+    const d = r[0]; // Data na coluna A da basemovigrama
+    if (dFrom && d && d < dFrom) return false;
+    if (dTo   && d && d > dTo)   return false;
+    return true;
+  });
+
+  renderAll();
+  renderMovigrama(filteredMovi); // Passa os dados filtrados para o gráfico
+}
 function clearFilters() {
   ['fFornecedor','fMaterial','fStatus'].forEach(id => document.getElementById(id).value = '');
   ['fDateFrom','fDateTo'].forEach(id => document.getElementById(id).value = '');
