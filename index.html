@@ -945,10 +945,16 @@
 // ═══════════════════════════════════════════════════
 // CONFIG — edite apenas esta seção
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// CONFIGURAÇÃO DE DADOS - CONEXÃO COM GOOGLE SHEETS
+// ═══════════════════════════════════════════════════
 const SHEET_ID = '1MFnPmUfxxzE1gjJzGVlVmdFOaHI-TmqonLnRGQNNQC8';
-const GID_ACOMPANHAMENTO = '0'; // gid da aba Acompanhamento_r1 (verifique na URL)
-const GID_MOVIGRAMA      = ''; // gid da aba basemovigrama (verifique na URL da planilha)
 
+// URL para a aba Acompanhamento_r1 (GID 0)
+const URL_ACOMPANHAMENTO = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+// URL para a aba basemovigrama (O GID da sua aba é 1579213197)
+const URL_MOVIGRAMA = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1579213197`;
 // Mapeamento colunas (0-indexed)
 const COL = {
   FORNECEDOR: 0,   // A
