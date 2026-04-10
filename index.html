@@ -1113,7 +1113,14 @@ function populateFilters() {
     const sel = document.getElementById(id);
     const cur = sel.value;
     sel.innerHTML = '<option value="">Todos</option>';
-    [...new Set(vals)].filter(Boolean).sort().forEach(v => {
+    // Deduplica preservando o valor original (trim), ordena
+    const seen = new Set();
+    const unique = [];
+    vals.forEach(v => {
+      const t = String(v || '').trim();
+      if (t && !seen.has(norm(t))) { seen.add(norm(t)); unique.push(t); }
+    });
+    unique.sort().forEach(v => {
       const o = document.createElement('option');
       o.value = v; o.textContent = v;
       sel.appendChild(o);
@@ -1126,23 +1133,23 @@ function populateFilters() {
 }
 
 function applyFilters() {
-  const forn   = document.getElementById('fFornecedor').value;
-  const mat    = document.getElementById('fMaterial').value;
+  const forn   = document.getElementById('fFornecedor').value.trim();
+  const mat    = document.getElementById('fMaterial').value.trim();
   const dFrom  = document.getElementById('fDateFrom').value;
   const dTo    = document.getElementById('fDateTo').value;
-  const status = document.getElementById('fStatus').value;
+  const status = document.getElementById('fStatus').value.trim();
 
   filteredData = rawData.filter(r => {
-    if (forn   && r[COL.FORNECEDOR] !== forn) return false;
-    if (mat    && r[COL.MATERIAL]   !== mat)  return false;
-    if (status && r[COL.STATUS]     !== status) return false;
+    if (forn   && norm(r[COL.FORNECEDOR]) !== norm(forn))   return false;
+    if (mat    && norm(r[COL.MATERIAL])   !== norm(mat))    return false;
+    if (status && norm(r[COL.STATUS])     !== norm(status)) return false;
     const d = normalizeDate(r[COL.ENT_LOG]);
     if (dFrom && d && d < dFrom) return false;
     if (dTo   && d && d > dTo)   return false;
     return true;
   });
 
-  // Movigrama: filtra pela coluna A (data de entrada logística = índice 0)
+  // Movigrama: filtra pela coluna A (mesma data da col N)
   filteredMoviData = moviData.filter(r => {
     const d = normalizeDate(r[0]);
     if (dFrom && d && d < dFrom) return false;
@@ -1151,6 +1158,11 @@ function applyFilters() {
   });
 
   renderAll();
+}
+
+// Normaliza string para comparação (trim + lowercase + remove espaços duplos)
+function norm(v) {
+  return String(v || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 function clearFilters() {
@@ -1185,9 +1197,11 @@ function renderKPIs() {
   const vFis  = data.reduce((a, r) => a + (parseFloat(r[COL.VOL_FIS])  || 0), 0);
   const divT  = data.reduce((a, r) => a + (parseFloat(r[COL.DIV_TOTAL]) || 0), 0);
   const leads = data.filter(r => r[COL.ENT_LOG] && r[COL.INSP]).map(r => {
-    const d1 = new Date(r[COL.ENT_LOG]), d2 = new Date(r[COL.INSP]);
-    return (d2 - d1) / 86400000;
-  });
+    const d1 = new Date(normalizeDate(r[COL.ENT_LOG]));
+    const d2 = new Date(normalizeDate(r[COL.INSP]));
+    const diff = (d2 - d1) / 86400000;
+    return isNaN(diff) ? null : diff;
+  }).filter(v => v !== null && v >= 0);
   const avgLead = leads.length ? (leads.reduce((a,b) => a+b,0) / leads.length).toFixed(1) : '—';
   const divNFs = data.filter(r => parseFloat(r[COL.DIV_TOTAL]) > 0).length;
 
@@ -1255,8 +1269,11 @@ function renderChartLead() {
   const agg = {};
   filteredData.forEach(r => {
     if (!r[COL.ENT_LOG] || !r[COL.INSP]) return;
+    const d1 = new Date(normalizeDate(r[COL.ENT_LOG]));
+    const d2 = new Date(normalizeDate(r[COL.INSP]));
+    const lead = (d2 - d1) / 86400000;
+    if (isNaN(lead) || lead < 0) return;
     const f = r[COL.FORNECEDOR] || 'N/D';
-    const lead = (new Date(r[COL.INSP]) - new Date(r[COL.ENT_LOG])) / 86400000;
     if (!agg[f]) agg[f] = [];
     agg[f].push(lead);
   });
@@ -1279,7 +1296,10 @@ function renderTableFornecedores() {
     a.dQtd  += parseFloat(r[COL.DIV_QTD])   || 0;
     a.dTot  += parseFloat(r[COL.DIV_TOTAL]) || 0;
     if (r[COL.ENT_LOG] && r[COL.INSP]) {
-      a.leads.push((new Date(r[COL.INSP]) - new Date(r[COL.ENT_LOG])) / 86400000);
+      const d1 = new Date(normalizeDate(r[COL.ENT_LOG]));
+      const d2 = new Date(normalizeDate(r[COL.INSP]));
+      const diff = (d2 - d1) / 86400000;
+      if (!isNaN(diff) && diff >= 0) a.leads.push(diff);
     }
   });
 
@@ -1454,7 +1474,12 @@ function renderTableNFs() {
   const show = filteredData.slice(0, 200);
   show.forEach(r => {
     const lead = (r[COL.ENT_LOG] && r[COL.INSP])
-      ? ((new Date(r[COL.INSP]) - new Date(r[COL.ENT_LOG])) / 86400000).toFixed(0) + 'd'
+      ? (() => {
+          const d1 = new Date(normalizeDate(r[COL.ENT_LOG]));
+          const d2 = new Date(normalizeDate(r[COL.INSP]));
+          const diff = Math.round((d2 - d1) / 86400000);
+          return (!isNaN(diff) && diff >= 0) ? diff + 'd' : '—';
+        })()
       : '—';
     const divT = parseFloat(r[COL.DIV_TOTAL]) || 0;
     const cls  = divT > 5 ? 'badge-danger' : divT > 0 ? 'badge-warn' : 'badge-ok';
@@ -1501,7 +1526,7 @@ function renderTableAcoes() {
       const vC = parseFloat(r[COL.VOL_COMP]) || 1;
       const dT = parseFloat(r[COL.DIV_TOTAL]) || 0;
       const pct = (dT / vC * 100).toFixed(1);
-      const dias = r[COL.ENT_LOG] ? Math.floor((today - new Date(r[COL.ENT_LOG])) / 86400000) : 0;
+      const dias = r[COL.ENT_LOG] ? Math.max(0, Math.floor((today - new Date(normalizeDate(r[COL.ENT_LOG]))) / 86400000)) : 0;
       const hasTrat = r[COL.TRATATIVA] && r[COL.TRATATIVA].trim();
       const hasAF   = r[COL.ACAO_FINAL] && r[COL.ACAO_FINAL].trim();
       let prio, prioLabel, prioCls;
