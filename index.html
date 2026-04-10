@@ -601,34 +601,106 @@
   <!-- ═══════════ TAB: MOVIGRAMA ═══════════ -->
   <div class="tab-content" id="tab-movigrama">
 
+    <!-- KPIs linha 1: fluxo básico -->
     <div class="section">
       <div class="section-header">
-        <span class="section-title">Movigrama — Fluxo Diário de Volume</span>
-        <span class="section-sub">Entrada × Saída × Saldo Acumulado (aba basemovigrama)</span>
+        <span class="section-title">Movigrama — Painel de Performance e Capacidade</span>
+        <span class="section-sub">Entrada × Saída × Saldo × Indicadores de Decisão</span>
         <span id="moviPeriodo" style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-left:auto;letter-spacing:0.08em"></span>
       </div>
 
-      <!-- Movigrama KPIs -->
-      <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-        <div class="kpi-card info"><div class="kpi-label">Saldo Atual (m³)</div><div class="kpi-value" id="moviSaldo">—</div><div class="kpi-delta">Coluna E</div></div>
-        <div class="kpi-card ok"><div class="kpi-label">Total Entrado</div><div class="kpi-value" id="moviEntrada">—</div><div class="kpi-delta">Σ Coluna B</div></div>
-        <div class="kpi-card warn"><div class="kpi-label">Total Saído</div><div class="kpi-value" id="moviSaida">—</div><div class="kpi-delta">Σ Coluna C</div></div>
-        <div class="kpi-card danger"><div class="kpi-label">Dias c/ Saldo Alto</div><div class="kpi-value" id="moviDiasAltos">—</div><div class="kpi-delta">Acima da média</div></div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+        <div class="kpi-card info">
+          <div class="kpi-label">Saldo Atual (m³)</div>
+          <div class="kpi-value" id="moviSaldo">—</div>
+          <div class="kpi-delta">Pendente no pátio</div>
+        </div>
+        <div class="kpi-card ok">
+          <div class="kpi-label">Total Entrado</div>
+          <div class="kpi-value" id="moviEntrada">—</div>
+          <div class="kpi-delta">Σ Coluna B</div>
+        </div>
+        <div class="kpi-card warn">
+          <div class="kpi-label">Total Saído</div>
+          <div class="kpi-value" id="moviSaida">—</div>
+          <div class="kpi-delta">Σ Coluna C</div>
+        </div>
+        <div class="kpi-card danger">
+          <div class="kpi-label">Dias Críticos</div>
+          <div class="kpi-value" id="moviDiasCrit">—</div>
+          <div class="kpi-delta">Entrada > Saída</div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="movi-legend">
-          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--ok)"></div> Entrada</div>
-          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--warn)"></div> Saída</div>
-          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--info)"></div> Saldo Acumulado</div>
+      <!-- KPIs linha 2: indicadores de decisão -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="kpi-card warn">
+          <div class="kpi-label">Eficiência de Escoamento</div>
+          <div class="kpi-value" id="moviEfic">—</div>
+          <div class="kpi-delta">(Saída / Entrada) × 100</div>
         </div>
-        <div class="chart-wrap" style="height:340px"><canvas id="chartMovigrama"></canvas></div>
+        <div class="kpi-card" id="kpiBacklogCard">
+          <div class="kpi-label">Índice de Backlog</div>
+          <div class="kpi-value" id="moviBacklog">—</div>
+          <div class="kpi-delta">Saída − Entrada (período)</div>
+        </div>
+        <div class="kpi-card danger">
+          <div class="kpi-label">Dias de Cobertura</div>
+          <div class="kpi-value" id="moviCobertura">—</div>
+          <div class="kpi-delta">Pátio ÷ média saída 5d</div>
+        </div>
+        <div class="kpi-card ok">
+          <div class="kpi-label">Cap. Nominal (pico)</div>
+          <div class="kpi-value" id="moviCapNom">—</div>
+          <div class="kpi-delta">Máx. saída já registrada</div>
+        </div>
       </div>
     </div>
 
+    <!-- Gráfico principal com linha de capacidade -->
     <div class="section">
       <div class="section-header">
-        <span class="section-title">Detalhamento Diário</span>
+        <span class="section-title">Fluxo Diário + Linha de Capacidade Nominal</span>
+        <span class="section-sub">A linha tracejada indica o teto histórico de saída — quando as barras de entrada a ultrapassam, o backlog cresce</span>
+      </div>
+      <div class="card">
+        <div class="movi-legend" id="moviLegend">
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--ok)"></div> Entrada</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--warn)"></div> Saída</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--info)"></div> Saldo Acumulado</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--danger);border-radius:2px"></div> Cap. Nominal</div>
+        </div>
+        <div class="chart-wrap" style="height:360px"><canvas id="chartMovigrama"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Relatório de Diagnóstico -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Relatório de Diagnóstico Automático</span>
+        <span class="section-sub">Gerado com base nos indicadores do período selecionado</span>
+      </div>
+      <div id="diagContainer" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+        <div class="analysis-block" id="diagGargalo">
+          <div class="analysis-title">🔍 Diagnóstico de Gargalo</div>
+          <div class="analysis-text" id="diagGargaloTxt">Carregando…</div>
+        </div>
+        <div class="analysis-block warn" id="diagSimul">
+          <div class="analysis-title">⚡ Simulador de Equipe</div>
+          <div class="analysis-text" id="diagSimulTxt">Carregando…</div>
+        </div>
+        <div class="analysis-block danger" style="grid-column:1/-1" id="diagDir">
+          <div class="analysis-title">📋 Argumento para a Diretoria</div>
+          <div class="analysis-text" id="diagDirTxt">Carregando…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela auxiliar de indicadores -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Tabela Auxiliar de Indicadores de Decisão</span>
+        <span class="section-sub">Colunas calculadas por dia — use para identificar padrões semana a semana</span>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -639,12 +711,14 @@
                 <th>Entrada (m³)</th>
                 <th>Saída (m³)</th>
                 <th>Saldo (m³)</th>
-                <th>Variação</th>
-                <th>Alerta</th>
+                <th title="(Saída / Entrada) × 100">% Eficiência</th>
+                <th title="Saída − Entrada">Índice Backlog</th>
+                <th title="Saldo ÷ média saída 5 dias">Dias Cobertura</th>
+                <th>Status de Alerta</th>
               </tr>
             </thead>
             <tbody id="tblMoviBody">
-              <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Clique em "↻ Atualizar Dados" para carregar</td></tr>
+              <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:30px">Clique em "↻ Atualizar Dados" para carregar</td></tr>
             </tbody>
           </table>
         </div>
@@ -948,7 +1022,7 @@
 // ═══════════════════════════════════════════════════
 const SHEET_ID = '1MFnPmUfxxzE1gjJzGVlVmdFOaHI-TmqonLnRGQNNQC8';
 const GID_ACOMPANHAMENTO = '0'; // gid da aba Acompanhamento_r1 (verifique na URL)
-const GID_MOVIGRAMA      = '1073486984'; // gid da aba basemovigrama (verifique na URL da planilha)
+const GID_MOVIGRAMA      = '13686371'; // gid da aba basemovigrama (verifique na URL da planilha)
 
 // Mapeamento colunas (0-indexed)
 const COL = {
@@ -1363,108 +1437,219 @@ function renderChartFornComp() {
   });
 }
 
-// ─── MOVIGRAMA ───
+// ─── MOVIGRAMA COMPLETO ───
 function renderMovigrama() {
-  // Usa filteredMoviData (já filtrado por data em applyFilters)
-  const data = filteredMoviData.length ? filteredMoviData : moviData;
+  const data = (filteredMoviData.length ? filteredMoviData : moviData);
+  if (!data.length) return;
 
-  // Recalcula saldo acumulado a partir do primeiro ponto do filtro
-  // (mantém progressão correta mesmo quando a janela não começa do zero)
+  // ── Saldo base (para filtros de janela) ──
   let saldoBase = 0;
   if (filteredMoviData.length && moviData.length) {
-    // Se há filtro de data, busca o saldo do dia anterior ao primeiro dia filtrado
     const firstDate = normalizeDate(data[0][0]);
     const idx = moviData.findIndex(r => normalizeDate(r[0]) >= firstDate);
-    if (idx > 0) {
-      saldoBase = parseFloat(moviData[idx - 1][4]) || 0;
-    }
+    if (idx > 0) saldoBase = parseFloat(moviData[idx - 1][4]) || 0;
   }
 
   const labels = data.map(r => r[0]);
   const ent    = data.map(r => parseFloat(r[1]) || 0);
   const sai    = data.map(r => parseFloat(r[2]) || 0);
 
-  // Recalcula saldo acumulado para o período filtrado
+  // ── Saldo acumulado ──
   const saldo = [];
   let acc = saldoBase;
+  const semFiltroData = !document.getElementById('fDateFrom').value && !document.getElementById('fDateTo').value;
   data.forEach((r, i) => {
-    // Se a planilha já tem saldo calculado (col E) e não há filtro, usa direto
-    const rawSaldo = parseFloat(r[4]);
-    if (!document.getElementById('fDateFrom').value && !document.getElementById('fDateTo').value && !isNaN(rawSaldo)) {
-      saldo.push(rawSaldo);
-    } else {
-      acc = acc + ent[i] - sai[i];
-      saldo.push(parseFloat(acc.toFixed(2)));
-    }
+    const rawS = parseFloat(r[4]);
+    if (semFiltroData && !isNaN(rawS)) { saldo.push(rawS); }
+    else { acc = acc + ent[i] - sai[i]; saldo.push(parseFloat(acc.toFixed(2))); }
   });
 
-  const totalEnt  = ent.reduce((a,b) => a+b, 0);
-  const totalSai  = sai.reduce((a,b) => a+b, 0);
-  const curSaldo  = saldo[saldo.length - 1] || 0;
-  const avgSaldo  = saldo.length ? saldo.reduce((a,b) => a+b, 0) / saldo.length : 0;
-  const diasAltos = saldo.filter(s => s > avgSaldo).length;
+  // ── Capacidade nominal: média do top-10% de saídas (pico sustentável) ──
+  const saiOrdenada = [...sai].filter(v => v > 0).sort((a,b) => b - a);
+  const top10count  = Math.max(1, Math.floor(saiOrdenada.length * 0.1));
+  const capNominal  = saiOrdenada.slice(0, top10count).reduce((a,b) => a+b, 0) / top10count;
+  const maxSai      = Math.max(...sai);
 
-  document.getElementById('moviSaldo').textContent    = fmt1(curSaldo);
-  document.getElementById('moviEntrada').textContent  = fmt1(totalEnt);
-  document.getElementById('moviSaida').textContent    = fmt1(totalSai);
-  document.getElementById('moviDiasAltos').textContent = diasAltos;
+  // ── Indicadores por dia ──
+  const efic      = ent.map((e, i) => e > 0 ? (sai[i] / e * 100) : null);
+  const backlogIdx = ent.map((e, i) => sai[i] - e); // + = reduzindo, - = represando
+  
+  // Dias de cobertura: saldo[i] / média saída últimos 5 dias
+  const cobertura = saldo.map((s, i) => {
+    const janela = sai.slice(Math.max(0, i - 4), i + 1).filter(v => v > 0);
+    const mediaSai = janela.length ? janela.reduce((a,b) => a+b, 0) / janela.length : 0;
+    return mediaSai > 0 ? parseFloat((s / mediaSai).toFixed(1)) : null;
+  });
 
-  // Indicador de período filtrado
+  // Status de alerta por dia
+  const statusDia = ent.map((e, i) => {
+    const s = sai[i];
+    if (s > e * 1.05)              return 'RECUPERAÇÃO';
+    if (Math.abs(s - e) / (e||1) <= 0.05) return 'EQUILIBRADO';
+    return 'CRÍTICO';
+  });
+
+  // ── KPIs globais ──
+  const totalEnt   = ent.reduce((a,b) => a+b, 0);
+  const totalSai   = sai.reduce((a,b) => a+b, 0);
+  const curSaldo   = saldo[saldo.length - 1] || 0;
+  const eficGlobal = totalEnt > 0 ? (totalSai / totalEnt * 100).toFixed(1) : '—';
+  const backlogGlobal = totalSai - totalEnt;
+  const sai5d      = sai.slice(-5).filter(v => v > 0);
+  const mediaSai5d = sai5d.length ? sai5d.reduce((a,b) => a+b, 0) / sai5d.length : 0;
+  const coberturaAtual = mediaSai5d > 0 ? (curSaldo / mediaSai5d).toFixed(1) : '—';
+  const diasCrit   = statusDia.filter(s => s === 'CRÍTICO').length;
+
+  // ── Atualiza KPIs ──
+  document.getElementById('moviSaldo').textContent       = fmt1(curSaldo);
+  document.getElementById('moviEntrada').textContent     = fmt1(totalEnt);
+  document.getElementById('moviSaida').textContent       = fmt1(totalSai);
+  document.getElementById('moviDiasCrit').textContent    = diasCrit;
+  document.getElementById('moviEfic').textContent        = eficGlobal + '%';
+  document.getElementById('moviBacklog').textContent     = (backlogGlobal >= 0 ? '+' : '') + fmt1(backlogGlobal);
+  document.getElementById('moviCobertura').textContent   = coberturaAtual + ' d';
+  document.getElementById('moviCapNom').textContent      = fmt1(capNominal) + ' m³/d';
+
+  // Cor do card de backlog
+  const kpiBack = document.getElementById('kpiBacklogCard');
+  kpiBack.className = 'kpi-card ' + (backlogGlobal >= 0 ? 'ok' : 'danger');
+  document.getElementById('moviBacklog').style.color = backlogGlobal >= 0 ? 'var(--ok)' : 'var(--danger)';
+
+  // ── Período ──
   const periodoEl = document.getElementById('moviPeriodo');
   if (periodoEl) {
-    const dFrom = document.getElementById('fDateFrom').value;
-    const dTo   = document.getElementById('fDateTo').value;
-    periodoEl.textContent = (dFrom || dTo)
-      ? `Período: ${dFrom || '…'} → ${dTo || '…'} · ${data.length} dia(s)`
+    const dF = document.getElementById('fDateFrom').value;
+    const dT = document.getElementById('fDateTo').value;
+    periodoEl.textContent = (dF || dT)
+      ? `Período: ${dF||'…'} → ${dT||'…'} · ${data.length} dia(s)`
       : `Período completo · ${data.length} dia(s)`;
   }
 
+  // ── Gráfico ──
+  const capLine = Array(labels.length).fill(parseFloat(capNominal.toFixed(2)));
   destroyChart('chartMovigrama');
   charts['chartMovigrama'] = new Chart(document.getElementById('chartMovigrama'), {
     type: 'bar',
     data: {
       labels,
       datasets: [
-        { type: 'bar',  label: 'Entrada',        data: ent,   backgroundColor: 'rgba(92,184,122,0.5)',  borderColor: 'rgba(92,184,122,1)', borderWidth: 1, yAxisID: 'y' },
-        { type: 'bar',  label: 'Saída',           data: sai,   backgroundColor: 'rgba(224,154,60,0.5)',  borderColor: 'rgba(224,154,60,1)', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Saldo Acumulado', data: saldo, borderColor: 'rgba(92,155,224,1)', backgroundColor: 'rgba(92,155,224,0.08)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y2' }
+        { type: 'bar',  label: 'Entrada',          data: ent,     backgroundColor: 'rgba(92,184,122,0.45)', borderColor: 'rgba(92,184,122,0.9)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'bar',  label: 'Saída',             data: sai,     backgroundColor: 'rgba(224,154,60,0.45)', borderColor: 'rgba(224,154,60,0.9)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'line', label: 'Saldo Acumulado',   data: saldo,   borderColor: 'rgba(92,155,224,1)',   backgroundColor: 'rgba(92,155,224,0.06)', fill: true, tension: 0.35, pointRadius: 1.5, borderWidth: 2, yAxisID: 'y2' },
+        { type: 'line', label: 'Cap. Nominal',      data: capLine, borderColor: 'rgba(224,92,92,0.85)', backgroundColor: 'transparent',         borderDash: [6,3], pointRadius: 0, borderWidth: 1.5, yAxisID: 'y' }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { labels: { color: '#7a8099', font: { family: 'DM Mono', size: 11 } } } },
+      plugins: {
+        legend: { labels: { color: '#7a8099', font: { family: 'DM Mono', size: 11 }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            afterBody(items) {
+              const i = items[0]?.dataIndex;
+              if (i == null) return [];
+              const e_ = ent[i], s_ = sai[i];
+              const ef = e_ > 0 ? (s_/e_*100).toFixed(1) : '—';
+              const bl = (s_ - e_).toFixed(1);
+              const cob = cobertura[i] != null ? cobertura[i] + 'd' : '—';
+              const st  = statusDia[i];
+              return [`─────────────`, `Eficiência: ${ef}%`, `Backlog idx: ${parseFloat(bl)>=0?'+':''}${bl} m³`, `Cobertura: ${cob}`, `Status: ${st}`];
+            }
+          },
+          bodyColor: '#c8a96e', titleColor: '#e8eaf0', backgroundColor: '#181c26',
+          borderColor: '#2a2f42', borderWidth: 1, padding: 10,
+          titleFont: { family: 'DM Mono', size: 11 },
+          bodyFont:  { family: 'DM Mono', size: 11 }
+        }
+      },
       scales: {
-        x: { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 20 }, grid: { color: '#2a2f42' } },
-        y:  { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#2a2f42' }, title: { display: true, text: 'm³ diário', color: '#7a8099', font: { size: 10 } } },
+        x:  { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 22 }, grid: { color: '#1e2333' } },
+        y:  { ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1e2333' }, title: { display: true, text: 'm³ / dia', color: '#7a8099', font: { size: 10 } } },
         y2: { position: 'right', ticks: { color: 'rgba(92,155,224,0.8)', font: { family: 'DM Mono', size: 10 } }, grid: { display: false }, title: { display: true, text: 'Saldo (m³)', color: 'rgba(92,155,224,0.8)', font: { size: 10 } } }
       }
     }
   });
 
-  // Tabela
+  // ── Diagnósticos ──
+  gerarDiagnostico({ ent, sai, saldo, eficGlobal, backlogGlobal, curSaldo, mediaSai5d, coberturaAtual, capNominal, maxSai, totalEnt, totalSai, diasCrit, statusDia });
+
+  // ── Tabela auxiliar ──
   const tbody = document.getElementById('tblMoviBody');
   tbody.innerHTML = '';
-  data.slice().reverse().forEach((r, i) => {
-    const e   = parseFloat(r[1]) || 0;
-    const s   = parseFloat(r[2]) || 0;
-    const bal = saldo[saldo.length - 1 - i] || 0;
-    const var_ = e - s;
-    const alerta = bal > avgSaldo * 1.5 ? '<span class="badge badge-danger">ALTO</span>' :
-                   bal > avgSaldo       ? '<span class="badge badge-warn">ATENÇÃO</span>' :
-                   '<span class="badge badge-ok">NORMAL</span>';
+  // Exibe do mais recente ao mais antigo
+  data.slice().reverse().forEach((r, iRev) => {
+    const i   = data.length - 1 - iRev;
+    const e   = ent[i], s = sai[i], bal = saldo[i];
+    const ef  = efic[i] != null ? efic[i].toFixed(1) + '%' : '—';
+    const bl  = backlogIdx[i];
+    const cob = cobertura[i] != null ? cobertura[i] + 'd' : '—';
+    const st  = statusDia[i];
+    const stCls = st === 'CRÍTICO' ? 'badge-danger' : st === 'RECUPERAÇÃO' ? 'badge-ok' : 'badge-info';
+    const blColor = bl >= 0 ? 'var(--ok)' : 'var(--danger)';
+    const efColor = efic[i] == null ? 'var(--muted)' : efic[i] >= 100 ? 'var(--ok)' : efic[i] >= 70 ? 'var(--warn)' : 'var(--danger)';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-family:var(--font-mono)">${r[0]}</td>
       <td style="color:var(--ok)">${fmt1(e)}</td>
       <td style="color:var(--warn)">${fmt1(s)}</td>
       <td style="font-weight:600">${fmt1(bal)}</td>
-      <td style="color:${var_ >= 0 ? 'var(--ok)' : 'var(--danger)'}">${var_ >= 0 ? '+' : ''}${fmt1(var_)}</td>
-      <td>${alerta}</td>
+      <td style="font-family:var(--font-mono);color:${efColor}">${ef}</td>
+      <td style="font-family:var(--font-mono);color:${blColor}">${bl >= 0 ? '+' : ''}${fmt1(bl)}</td>
+      <td style="font-family:var(--font-mono);color:${parseFloat(cob)>7?'var(--danger)':parseFloat(cob)>3?'var(--warn)':'var(--ok)'}">${cob}</td>
+      <td><span class="badge ${stCls}">${st}</span></td>
     `;
     tbody.appendChild(tr);
   });
-  if (!data.length) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Nenhum dado no período selecionado</td></tr>';
+  if (!data.length) tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Nenhum dado no período selecionado</td></tr>';
+}
+
+// ── Diagnóstico automático ──
+function gerarDiagnostico({ ent, sai, saldo, eficGlobal, backlogGlobal, curSaldo, mediaSai5d, coberturaAtual, capNominal, maxSai, totalEnt, totalSai, diasCrit, statusDia }) {
+  const n = ent.length;
+  if (!n) return;
+
+  // Últimos 5 dias
+  const ent5  = ent.slice(-5);
+  const sai5  = sai.slice(-5);
+  const avgEnt5 = ent5.reduce((a,b)=>a+b,0) / ent5.length;
+  const avgSai5 = sai5.reduce((a,b)=>a+b,0) / sai5.length;
+
+  // Saldo crescendo ou caindo?
+  const saldoTrend = n >= 5 ? saldo[n-1] - saldo[n-5] : saldo[n-1] - saldo[0];
+  const saldoEstavelOuCaindo = saldoTrend <= 0;
+
+  // Diagnóstico de gargalo
+  let gargaloHtml = '';
+  if (saldoEstavelOuCaindo && avgSai5 >= capNominal * 0.9) {
+    gargaloHtml = `O saldo acumulado <strong>parou de crescer porque a equipe atingiu o teto de produtividade</strong>. A saída média dos últimos 5 dias (${fmt1(avgSai5)} m³/d) representa <strong>${(avgSai5/capNominal*100).toFixed(0)}% da capacidade nominal</strong> (${fmt1(capNominal)} m³/d). A equipe está operando no limite — qualquer pico de entrada voltará a represar o pátio. <strong>Recomendação:</strong> reforço temporário de mão de obra ou revisão de jornada.`;
+  } else if (saldoEstavelOuCaindo && avgEnt5 < avgSai5) {
+    gargaloHtml = `O saldo acumulado <strong>parou de crescer porque a entrada de material caiu</strong>, e não por um ganho de produtividade. A entrada média dos últimos 5 dias (${fmt1(avgEnt5)} m³/d) está abaixo da saída (${fmt1(avgSai5)} m³/d). Isso pode indicar falta de fornecimento ou gargalo na logística de compras. <strong>Atenção:</strong> quando a entrada normalizar, o represamento pode retornar rapidamente.`;
+  } else {
+    gargaloHtml = `O saldo acumulado <strong>continua crescendo</strong> (+${fmt1(saldoTrend)} m³ nos últimos 5 períodos). A entrada (${fmt1(avgEnt5)} m³/d) supera a saída (${fmt1(avgSai5)} m³/d) em <strong>${fmt1(avgEnt5 - avgSai5)} m³/d</strong>. A equipe <strong>não está conseguindo vencer a demanda</strong> no ritmo atual — o backlog acumula a cada dia. Risco de colapso operacional se não houver intervenção.`;
+  }
+  document.getElementById('diagGargaloTxt').innerHTML = gargaloHtml;
+  document.getElementById('diagGargalo').className = 'analysis-block ' + (saldoEstavelOuCaindo ? 'ok' : 'danger');
+
+  // Simulador de equipe: saída extra p/ zerar em 5 dias úteis
+  const saidaNecessaria5d = mediaSai5d + (curSaldo / 5);
+  const extraNecessario   = Math.max(0, saidaNecessaria5d - mediaSai5d);
+  const pctAumento        = mediaSai5d > 0 ? (extraNecessario / mediaSai5d * 100).toFixed(0) : '—';
+  const simulHtml = `Para zerar o saldo atual de <strong>${fmt1(curSaldo)} m³</strong> em <strong>5 dias úteis</strong>, o setor precisaria processar <strong>${fmt1(saidaNecessaria5d)} m³/dia</strong> — um aumento de <strong>${fmt1(extraNecessario)} m³/dia (+${pctAumento}%)</strong> sobre a média recente de saída (${fmt1(mediaSai5d)} m³/dia). ${parseFloat(saidaNecessaria5d) > capNominal ? `<strong style="color:var(--danger)">⚠️ Atenção: essa meta ultrapassa a capacidade nominal histórica de ${fmt1(capNominal)} m³/dia</strong>, indicando que 5 dias pode ser insuficiente sem reforço de equipe ou extensão de turno.` : `Essa meta está <strong style="color:var(--ok)">dentro da capacidade nominal</strong> de ${fmt1(capNominal)} m³/dia — viável com foco operacional.`}`;
+  document.getElementById('diagSimulTxt').innerHTML = simulHtml;
+
+  // Argumento para a diretoria
+  const diasRecup  = statusDia.filter(s => s === 'RECUPERAÇÃO').length;
+  const diasEquil  = statusDia.filter(s => s === 'EQUILIBRADO').length;
+  const risco      = parseFloat(coberturaAtual) > 7 ? 'ALTO' : parseFloat(coberturaAtual) > 3 ? 'MODERADO' : 'BAIXO';
+  const riscoColor = risco === 'ALTO' ? 'var(--danger)' : risco === 'MODERADO' ? 'var(--warn)' : 'var(--ok)';
+  const dirHtml = `
+    <p style="margin-bottom:10px">No período analisado (<strong>${n} dias</strong>), o setor de recebimento recebeu <strong>${fmt1(totalEnt)} m³</strong> e processou <strong>${fmt1(totalSai)} m³</strong>, resultando em uma eficiência global de <strong>${eficGlobal}%</strong>.</p>
+    <p style="margin-bottom:10px">A <strong>Capacidade Nominal</strong> do setor — medida pela média do teto histórico de saída — é de <strong>${fmt1(capNominal)} m³/dia</strong>. A <strong>Demanda Real média</strong> no período foi de <strong>${fmt1(totalEnt/n)} m³/dia</strong>. ${(totalEnt/n) > capNominal ? `<strong style="color:var(--danger)">A demanda superou a capacidade nominal em ${fmt1((totalEnt/n) - capNominal)} m³/dia</strong>, comprovando que o sistema opera estruturalmente acima do limite.` : `A demanda está ${fmt1(capNominal - totalEnt/n)} m³/dia abaixo da capacidade nominal no período — porém picos pontuais já causaram represamento.`}</p>
+    <p style="margin-bottom:10px">O saldo atual de pátio é <strong>${fmt1(curSaldo)} m³</strong>, com <strong>${coberturaAtual} dias de cobertura</strong> — risco <strong style="color:${riscoColor}">${risco}</strong>. De ${n} dias analisados: <span style="color:var(--danger)">${diasCrit} Críticos</span>, <span style="color:var(--info)">${diasEquil} Equilibrados</span>, <span style="color:var(--ok)">${diasRecup} em Recuperação</span>.</p>
+    <p><strong>Conclusão executiva:</strong> ${risco === 'ALTO' ? `Sem reforço imediato de capacidade, o setor enfrentará colapso operacional em aproximadamente <strong>${coberturaAtual} dias</strong>. Recomenda-se aprovação de hora extra ou contratação temporária com <strong>urgência</strong>.` : risco === 'MODERADO' ? `O cenário é de atenção controlada. É necessário plano de ação preventivo para evitar que o backlog atual migre para risco alto nas próximas semanas.` : `O setor está operando em equilíbrio. Manter o monitoramento semanal e antecipar sazonalidades de entrada.`}</p>
+  `;
+  document.getElementById('diagDirTxt').innerHTML = dirHtml;
 }
 
 // ─── TABLE: NFs ───
