@@ -605,6 +605,7 @@
       <div class="section-header">
         <span class="section-title">Movigrama — Fluxo Diário de Volume</span>
         <span class="section-sub">Entrada × Saída × Saldo Acumulado (aba basemovigrama)</span>
+        <span id="moviPeriodo" style="font-family:var(--font-mono);font-size:10px;color:var(--accent);margin-left:auto;letter-spacing:0.08em"></span>
       </div>
 
       <!-- Movigrama KPIs -->
@@ -983,6 +984,7 @@ const COL = {
 let rawData = [];
 let moviData = [];
 let filteredData = [];
+let filteredMoviData = [];
 let charts = {};
 
 // ═══════════════════════════════════════════════════
@@ -1018,6 +1020,7 @@ async function loadFromSheets() {
       const rMovi = await fetch(urlMovi);
       const tMovi = await rMovi.text();
       moviData = parseCSV(tMovi).slice(1);
+      filteredMoviData = [...moviData];
       renderMovigrama();
     }
 
@@ -1090,6 +1093,7 @@ function loadDemoData() {
   }
 
   filteredData = [...rawData];
+  filteredMoviData = [...moviData];
   populateFilters();
   renderAll();
   renderMovigrama();
@@ -1128,34 +1132,32 @@ function applyFilters() {
   const dTo    = document.getElementById('fDateTo').value;
   const status = document.getElementById('fStatus').value;
 
-  // Filtra os dados da Tabela Principal
   filteredData = rawData.filter(r => {
     if (forn   && r[COL.FORNECEDOR] !== forn) return false;
     if (mat    && r[COL.MATERIAL]   !== mat)  return false;
     if (status && r[COL.STATUS]     !== status) return false;
-    const d = r[COL.ENT_LOG];
+    const d = normalizeDate(r[COL.ENT_LOG]);
     if (dFrom && d && d < dFrom) return false;
     if (dTo   && d && d > dTo)   return false;
     return true;
   });
 
-  // NOVA LÓGICA: Filtra os dados do Movigrama baseado nas mesmas datas
-  // Note que o Movigrama não filtra por Fornecedor/Material (pois ele é um resumo consolidado)
-  const filteredMovi = moviData.filter(r => {
-    const d = r[0]; // Data na coluna A da basemovigrama
+  // Movigrama: filtra pela coluna A (data de entrada logística = índice 0)
+  filteredMoviData = moviData.filter(r => {
+    const d = normalizeDate(r[0]);
     if (dFrom && d && d < dFrom) return false;
     if (dTo   && d && d > dTo)   return false;
     return true;
   });
 
   renderAll();
-  renderMovigrama(filteredMovi); // Passa os dados filtrados para o gráfico
 }
 
 function clearFilters() {
   ['fFornecedor','fMaterial','fStatus'].forEach(id => document.getElementById(id).value = '');
   ['fDateFrom','fDateTo'].forEach(id => document.getElementById(id).value = '');
   filteredData = [...rawData];
+  filteredMoviData = [...moviData];
   renderAll();
 }
 
@@ -1172,6 +1174,7 @@ function renderAll() {
   renderChartFornComp();
   renderTableNFs();
   renderTableAcoes();
+  renderMovigrama();
 }
 
 // ─── KPIs ───
@@ -1341,25 +1344,60 @@ function renderChartFornComp() {
 }
 
 // ─── MOVIGRAMA ───
-function renderMovigrama(dataToRender) {
-  // Se não passarmos dados (ex: no carregamento inicial), usa o moviData completo
-  const targetData = dataToRender || moviData;
-  
-  const labels = targetData.map(r => r[0]);
-  const ent    = targetData.map(r => parseFloat(r[1]) || 0);
-  const sai    = targetData.map(r => parseFloat(r[2]) || 0);
-  const saldo  = targetData.map(r => parseFloat(r[4]) || 0);
+function renderMovigrama() {
+  // Usa filteredMoviData (já filtrado por data em applyFilters)
+  const data = filteredMoviData.length ? filteredMoviData : moviData;
+
+  // Recalcula saldo acumulado a partir do primeiro ponto do filtro
+  // (mantém progressão correta mesmo quando a janela não começa do zero)
+  let saldoBase = 0;
+  if (filteredMoviData.length && moviData.length) {
+    // Se há filtro de data, busca o saldo do dia anterior ao primeiro dia filtrado
+    const firstDate = normalizeDate(data[0][0]);
+    const idx = moviData.findIndex(r => normalizeDate(r[0]) >= firstDate);
+    if (idx > 0) {
+      saldoBase = parseFloat(moviData[idx - 1][4]) || 0;
+    }
+  }
+
+  const labels = data.map(r => r[0]);
+  const ent    = data.map(r => parseFloat(r[1]) || 0);
+  const sai    = data.map(r => parseFloat(r[2]) || 0);
+
+  // Recalcula saldo acumulado para o período filtrado
+  const saldo = [];
+  let acc = saldoBase;
+  data.forEach((r, i) => {
+    // Se a planilha já tem saldo calculado (col E) e não há filtro, usa direto
+    const rawSaldo = parseFloat(r[4]);
+    if (!document.getElementById('fDateFrom').value && !document.getElementById('fDateTo').value && !isNaN(rawSaldo)) {
+      saldo.push(rawSaldo);
+    } else {
+      acc = acc + ent[i] - sai[i];
+      saldo.push(parseFloat(acc.toFixed(2)));
+    }
+  });
 
   const totalEnt  = ent.reduce((a,b) => a+b, 0);
   const totalSai  = sai.reduce((a,b) => a+b, 0);
   const curSaldo  = saldo[saldo.length - 1] || 0;
-  const avgSaldo  = saldo.reduce((a,b) => a+b, 0) / (saldo.length || 1);
+  const avgSaldo  = saldo.length ? saldo.reduce((a,b) => a+b, 0) / saldo.length : 0;
   const diasAltos = saldo.filter(s => s > avgSaldo).length;
 
-  document.getElementById('moviSaldo').textContent   = fmt1(curSaldo);
-  document.getElementById('moviEntrada').textContent = fmt1(totalEnt);
-  document.getElementById('moviSaida').textContent   = fmt1(totalSai);
+  document.getElementById('moviSaldo').textContent    = fmt1(curSaldo);
+  document.getElementById('moviEntrada').textContent  = fmt1(totalEnt);
+  document.getElementById('moviSaida').textContent    = fmt1(totalSai);
   document.getElementById('moviDiasAltos').textContent = diasAltos;
+
+  // Indicador de período filtrado
+  const periodoEl = document.getElementById('moviPeriodo');
+  if (periodoEl) {
+    const dFrom = document.getElementById('fDateFrom').value;
+    const dTo   = document.getElementById('fDateTo').value;
+    periodoEl.textContent = (dFrom || dTo)
+      ? `Período: ${dFrom || '…'} → ${dTo || '…'} · ${data.length} dia(s)`
+      : `Período completo · ${data.length} dia(s)`;
+  }
 
   destroyChart('chartMovigrama');
   charts['chartMovigrama'] = new Chart(document.getElementById('chartMovigrama'), {
@@ -1367,9 +1405,9 @@ function renderMovigrama(dataToRender) {
     data: {
       labels,
       datasets: [
-        { type: 'bar',  label: 'Entrada',         data: ent,   backgroundColor: 'rgba(92,184,122,0.5)',  borderColor: 'rgba(92,184,122,1)', borderWidth: 1, yAxisID: 'y' },
-        { type: 'bar',  label: 'Saída',            data: sai,   backgroundColor: 'rgba(224,154,60,0.5)',  borderColor: 'rgba(224,154,60,1)', borderWidth: 1, yAxisID: 'y' },
-        { type: 'line', label: 'Saldo Acumulado',  data: saldo, borderColor: 'rgba(92,155,224,1)', backgroundColor: 'rgba(92,155,224,0.08)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y2' }
+        { type: 'bar',  label: 'Entrada',        data: ent,   backgroundColor: 'rgba(92,184,122,0.5)',  borderColor: 'rgba(92,184,122,1)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'bar',  label: 'Saída',           data: sai,   backgroundColor: 'rgba(224,154,60,0.5)',  borderColor: 'rgba(224,154,60,1)', borderWidth: 1, yAxisID: 'y' },
+        { type: 'line', label: 'Saldo Acumulado', data: saldo, borderColor: 'rgba(92,155,224,1)', backgroundColor: 'rgba(92,155,224,0.08)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y2' }
       ]
     },
     options: {
@@ -1384,13 +1422,13 @@ function renderMovigrama(dataToRender) {
     }
   });
 
-  // Table
+  // Tabela
   const tbody = document.getElementById('tblMoviBody');
   tbody.innerHTML = '';
-  moviData.slice().reverse().forEach(r => {
-    const e = parseFloat(r[1]) || 0;
-    const s = parseFloat(r[2]) || 0;
-    const bal = parseFloat(r[4]) || 0;
+  data.slice().reverse().forEach((r, i) => {
+    const e   = parseFloat(r[1]) || 0;
+    const s   = parseFloat(r[2]) || 0;
+    const bal = saldo[saldo.length - 1 - i] || 0;
     const var_ = e - s;
     const alerta = bal > avgSaldo * 1.5 ? '<span class="badge badge-danger">ALTO</span>' :
                    bal > avgSaldo       ? '<span class="badge badge-warn">ATENÇÃO</span>' :
@@ -1406,6 +1444,7 @@ function renderMovigrama(dataToRender) {
     `;
     tbody.appendChild(tr);
   });
+  if (!data.length) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Nenhum dado no período selecionado</td></tr>';
 }
 
 // ─── TABLE: NFs ───
@@ -1521,6 +1560,26 @@ function chartOpts(unit) {
 
 function destroyChart(id) {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// Normaliza datas em vários formatos para yyyy-mm-dd (para comparação string)
+function normalizeDate(val) {
+  if (!val) return '';
+  const s = String(val).trim();
+  // já está em yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  // dd/mm/yyyy ou dd/mm/yy
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (m1) {
+    const y = m1[3].length === 2 ? '20' + m1[3] : m1[3];
+    return `${y}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
+  }
+  // dd-mm-yyyy
+  const m2 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m2) return `${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
+  // tenta Date nativo como fallback
+  try { const d = new Date(s); if (!isNaN(d)) return d.toISOString().split('T')[0]; } catch(e) {}
+  return s;
 }
 
 function fmt1(n) { return (Math.round(parseFloat(n) * 10) / 10).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
