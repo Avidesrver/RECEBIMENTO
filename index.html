@@ -533,6 +533,105 @@
   }
   .div-chip.qty { background: rgba(224,154,60,0.1); border-color: rgba(224,154,60,0.2); color: var(--warn); }
 
+  /* ── PREVISÃO DE ENTRADAS ── */
+  .prev-timeline {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 32px;
+  }
+  .prev-timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--danger), var(--warn), var(--ok), var(--border));
+    border-radius: 2px;
+  }
+  .prev-group { margin-bottom: 28px; }
+  .prev-group-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .prev-group-label::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+  .prev-group-label.atrasado   { background: rgba(224,92,92,0.12);  color: var(--danger); }
+  .prev-group-label.atrasado::before   { background: var(--danger); }
+  .prev-group-label.hoje       { background: rgba(224,154,60,0.12); color: var(--warn); }
+  .prev-group-label.hoje::before       { background: var(--warn); }
+  .prev-group-label.prox7      { background: rgba(200,169,110,0.12);color: var(--accent); }
+  .prev-group-label.prox7::before      { background: var(--accent); }
+  .prev-group-label.futuro     { background: rgba(92,155,224,0.10); color: var(--info); }
+  .prev-group-label.futuro::before     { background: var(--info); }
+
+  .prev-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .prev-card:hover { border-color: rgba(200,169,110,0.35); transform: translateX(2px); }
+  .prev-card.atrasado-pend { border-left: 3px solid var(--danger); }
+  .prev-card.atrasado-real { border-left: 3px solid var(--warn); }
+  .prev-card.no-prazo      { border-left: 3px solid var(--ok); }
+  .prev-card.futuro-ok     { border-left: 3px solid var(--info); }
+
+  .prev-card-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0;
+    align-items: stretch;
+  }
+  .prev-card-main { padding: 14px 18px; }
+  .prev-card-side {
+    background: var(--surface2);
+    border-left: 1px solid var(--border);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 6px;
+    min-width: 150px;
+  }
+  .prev-card-forn  { font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 2px; }
+  .prev-card-mat   { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .prev-card-nf    { font-family: var(--font-mono); font-size: 11px; color: var(--accent); }
+  .prev-card-dates {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .prev-date-item { display: flex; flex-direction: column; gap: 2px; }
+  .prev-date-lbl  { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .prev-date-val  { font-family: var(--font-mono); font-size: 12px; }
+  .prev-vol-val   { font-family: var(--font-display); font-size: 22px; }
+  .prev-vol-unit  { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.1em; }
+  .prev-atraso-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    text-align: center;
+  }
+
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -557,6 +656,7 @@
   <button class="tab-btn active" onclick="switchTab('dashboard',this)">Dashboard</button>
   <button class="tab-btn" onclick="switchTab('fornecedores',this)">Fornecedores</button>
   <button class="tab-btn" onclick="switchTab('movigrama',this)">Movigrama</button>
+  <button class="tab-btn" onclick="switchTab('previsao',this)">Previsão de Entradas</button>
   <button class="tab-btn" onclick="switchTab('nfs',this)">NFs / Detalhes</button>
   <button class="tab-btn" onclick="switchTab('analise',this)">Análise & Looker</button>
   <button class="tab-btn" onclick="switchTab('plano',this)">Plano de Ação</button>
@@ -1035,6 +1135,76 @@
 
   </div>
 
+  <!-- ═══════════ TAB: PREVISÃO DE ENTRADAS ═══════════ -->
+  <div class="tab-content" id="tab-previsao">
+
+    <!-- Header executivo -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:28px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Painel Executivo · Antecipação de Chegadas</div>
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--text)">Previsão de Entradas de Madeira</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Coluna M preenchida (previsão) e Coluna N vazia ou com atraso · Volume esperado = Coluna K</div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="background:var(--surface);border:1px solid rgba(224,92,92,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:0.1em">ATRASADO</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--danger)" id="prevQtAtras">—</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--danger)" id="prevVolAtras">— m³</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(224,154,60,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:0.1em">HOJE / AMANHÃ</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--warn)" id="prevQtHoje">—</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--warn)" id="prevVolHoje">— m³</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(200,169,110,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:0.1em">PRÓX. 7 DIAS</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--accent)" id="prevQt7d">—</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--accent)" id="prevVol7d">— m³</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(92,155,224,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:0.1em">FUTURO</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--info)" id="prevQtFut">—</div>
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--info)" id="prevVolFut">— m³</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:0.1em">VOL. TOTAL (m³)</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--text)" id="prevVolTotal">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráfico de volume previsto por semana -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Volume Previsto por Semana</span>
+        <span class="section-sub">Barras = m³ esperado · Cor indica situação</span>
+      </div>
+      <div class="card">
+        <div class="movi-legend">
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--danger)"></div> Atrasado</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--warn)"></div> Hoje / Amanhã</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--accent)"></div> Próx. 7 dias</div>
+          <div class="movi-leg-item"><div class="movi-dot" style="background:var(--info)"></div> Futuro</div>
+        </div>
+        <div class="chart-wrap" style="height:280px"><canvas id="chartPrevSemana"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Timeline de entregas -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Timeline de Entregas Previstas</span>
+        <span class="section-sub">Ordenadas por urgência — apenas previsões sem entrada física (Col. N vazia) ou com atraso real</span>
+      </div>
+      <div id="prevTimeline">
+        <div style="text-align:center;color:var(--muted);padding:60px;border:1px dashed var(--border);border-radius:10px">
+          Clique em <strong>↻ Atualizar Dados</strong> para carregar
+        </div>
+      </div>
+    </div>
+
+  </div>
+
 </div><!-- /main -->
 
 <script>
@@ -1043,7 +1213,7 @@
 // ═══════════════════════════════════════════════════
 const SHEET_ID = '1MFnPmUfxxzE1gjJzGVlVmdFOaHI-TmqonLnRGQNNQC8';
 const GID_ACOMPANHAMENTO = '0'; // gid da aba Acompanhamento_r1 (verifique na URL)
-const GID_MOVIGRAMA      = '1073486984'; // gid da aba basemovigrama (verifique na URL da planilha)
+const GID_MOVIGRAMA      = ''; // gid da aba basemovigrama (verifique na URL da planilha)
 
 // Mapeamento colunas (0-indexed)
 const COL = {
@@ -1172,13 +1342,32 @@ function loadDemoData() {
     row[COL.DIV_QTD]    = (Math.random() < 0.2)  ? (Math.random() * 2).toFixed(2) : '0';
     row[COL.DIV_TOTAL]  = divT;
     row[COL.STATUS]     = status[Math.floor(Math.random() * status.length)];
-    // V = true quando há divergência e foi acionado Compras
     row[COL.MARCADOR]   = parseFloat(divT) > 0 && Math.random() > 0.4 ? 'TRUE' : '';
     row[COL.OBS_REC]    = parseFloat(divT) > 0 ? 'Material recebido com divergência. Medições fora do especificado.' : '';
     row[COL.OBS_COMP]   = parseFloat(divT) > 0 && Math.random() > 0.5 ? 'Fornecedor notificado. Aguardando retorno.' : '';
     row[COL.TRAT_COMP]  = parseFloat(divT) > 0 && Math.random() > 0.5 ? 'Acionado fornecedor para esclarecimento e emissão de crédito.' : '';
     row[COL.TRAT_FAB]   = parseFloat(divT) > 0 && Math.random() > 0.6 ? 'Separado para análise de aproveitamento parcial.' : '';
     row[COL.ACAO_FINAL] = parseFloat(divT) > 0 && Math.random() > 0.7 ? 'Nota de débito emitida.' : '';
+
+    // Previsão de entrega (col M): distribui entre atrasado, iminente e futuro
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const rndDias = Math.floor(Math.random() * 40) - 15; // -15 a +25 dias
+    const dataPrev = new Date(hoje); dataPrev.setDate(hoje.getDate() + rndDias);
+    row[COL.PREV_COMP] = fmtDate(dataPrev);
+
+    // Se a previsão já passou, 60% chance de ter chegado (col N preenchida)
+    if (rndDias < 0 && Math.random() > 0.4) {
+      // Chegou alguns dias depois da previsão (pode ser atrasado)
+      const diasDelay = Math.floor(Math.random() * 5);
+      const dataEntrada = new Date(dataPrev); dataEntrada.setDate(dataPrev.getDate() + diasDelay);
+      // Sobrescreve só se a entrada original era anterior — garante consistência
+      if (!row[COL.ENT_LOG] || fmtDate(dataEntrada) > row[COL.ENT_LOG]) {
+        row[COL.ENT_LOG] = fmtDate(dataEntrada);
+      }
+    } else if (rndDias < 0) {
+      // Atrasado e ainda não chegou — deixa N vazio
+      row[COL.ENT_LOG] = '';
+    }
     rawData.push(row);
   }
 
@@ -1288,6 +1477,227 @@ function renderAll() {
   renderTableNFs();
   renderTableAcoes();
   renderMovigrama();
+  renderPrevisao();
+}
+
+// ─── PREVISÃO DE ENTRADAS ───
+function renderPrevisao() {
+  const today    = new Date(); today.setHours(0,0,0,0);
+  const todayStr = fmtDate(today);
+  const amanha   = new Date(today); amanha.setDate(amanha.getDate() + 1);
+  const d7       = new Date(today); d7.setDate(d7.getDate() + 7);
+
+  // Filtra: col M preenchida E (col N vazia OU M > N — atraso real na entrega)
+  const items = rawData.filter(r => {
+    const m = normalizeDate(r[COL.PREV_COMP]);
+    const n = normalizeDate(r[COL.ENT_LOG]);
+    if (!m) return false;
+    // Inclui se N está vazia (ainda não chegou) OU se a entrada real foi depois da previsão
+    return !n || n > m;
+  }).map(r => {
+    const m    = normalizeDate(r[COL.PREV_COMP]);
+    const n    = normalizeDate(r[COL.ENT_LOG]);
+    const mDate = new Date(m); mDate.setHours(0,0,0,0);
+    const vol  = parseFloat(r[COL.VOL_COMP]) || 0;
+
+    // Classificação
+    let tipo, diasAtraso = 0;
+    if (!n) {
+      // Não chegou ainda
+      if (mDate < today)       { tipo = 'atrasado-pend'; diasAtraso = Math.floor((today - mDate) / 86400000); }
+      else if (m <= fmtDate(amanha)) { tipo = 'hoje'; }
+      else if (m <= fmtDate(d7))    { tipo = 'prox7'; }
+      else                           { tipo = 'futuro'; }
+    } else {
+      // Chegou atrasado (N > M)
+      const nDate = new Date(n); nDate.setHours(0,0,0,0);
+      diasAtraso = Math.floor((nDate - mDate) / 86400000);
+      tipo = 'atrasado-real';
+    }
+    return { r, m, n, mDate, vol, tipo, diasAtraso };
+  });
+
+  // Contadores
+  const grp = { 'atrasado-pend': [], 'atrasado-real': [], hoje: [], prox7: [], futuro: [] };
+  items.forEach(it => (grp[it.tipo] || (grp[it.tipo] = [])).push(it));
+
+  const atrasados = [...(grp['atrasado-pend']||[]), ...(grp['atrasado-real']||[])];
+  const hojeItems = grp['hoje'] || [];
+  const p7Items   = grp['prox7'] || [];
+  const futItems  = grp['futuro'] || [];
+
+  const volSum = arr => arr.reduce((s,x) => s + x.vol, 0);
+  const volTotal = volSum(items);
+
+  // KPIs
+  const setKpi = (idQt, idVol, arr, cor) => {
+    const el1 = document.getElementById(idQt), el2 = document.getElementById(idVol);
+    if (el1) el1.textContent = arr.length;
+    if (el2) el2.textContent = fmt1(volSum(arr)) + ' m³';
+  };
+  setKpi('prevQtAtras','prevVolAtras', atrasados);
+  setKpi('prevQtHoje', 'prevVolHoje',  hojeItems);
+  setKpi('prevQt7d',   'prevVol7d',    p7Items);
+  setKpi('prevQtFut',  'prevVolFut',   futItems);
+  const elT = document.getElementById('prevVolTotal');
+  if (elT) elT.textContent = fmt1(volTotal);
+
+  // ── Gráfico por semana ──
+  // Agrupa por semana (início da semana ISO)
+  const semanas = {};
+  items.forEach(it => {
+    const d = new Date(it.mDate);
+    const day = d.getDay() || 7;
+    d.setDate(d.getDate() - day + 1); // segunda-feira
+    const key = fmtDate(d);
+    if (!semanas[key]) semanas[key] = { atrasado: 0, hoje: 0, prox7: 0, futuro: 0 };
+    const t = it.tipo === 'atrasado-pend' || it.tipo === 'atrasado-real' ? 'atrasado'
+            : it.tipo === 'hoje' ? 'hoje'
+            : it.tipo === 'prox7' ? 'prox7' : 'futuro';
+    semanas[key][t] += it.vol;
+  });
+  const semKeys   = Object.keys(semanas).sort();
+  const labelsSem = semKeys.map(k => {
+    const d = new Date(k);
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+  });
+
+  destroyChart('chartPrevSemana');
+  charts['chartPrevSemana'] = new Chart(document.getElementById('chartPrevSemana'), {
+    type: 'bar',
+    data: {
+      labels: labelsSem,
+      datasets: [
+        { label: 'Atrasado',     data: semKeys.map(k => semanas[k].atrasado), backgroundColor: 'rgba(224,92,92,0.7)',  borderColor: 'rgba(224,92,92,1)',  borderWidth: 1 },
+        { label: 'Hoje/Amanhã', data: semKeys.map(k => semanas[k].hoje),     backgroundColor: 'rgba(224,154,60,0.7)', borderColor: 'rgba(224,154,60,1)', borderWidth: 1 },
+        { label: 'Próx. 7d',    data: semKeys.map(k => semanas[k].prox7),    backgroundColor: 'rgba(200,169,110,0.7)',borderColor: 'rgba(200,169,110,1)', borderWidth: 1 },
+        { label: 'Futuro',      data: semKeys.map(k => semanas[k].futuro),   backgroundColor: 'rgba(92,155,224,0.55)',borderColor: 'rgba(92,155,224,1)',  borderWidth: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#7a8099', font: { family: 'DM Mono', size: 11 }, boxWidth: 12 } },
+        tooltip: { backgroundColor: '#181c26', titleColor: '#e8eaf0', bodyColor: '#c8a96e', borderColor: '#2a2f42', borderWidth: 1, titleFont: { family: 'DM Mono', size: 11 }, bodyFont: { family: 'DM Mono', size: 11 } }
+      },
+      scales: {
+        x: { stacked: true, ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1e2333' } },
+        y: { stacked: true, ticks: { color: '#7a8099', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1e2333' }, title: { display: true, text: 'm³', color: '#7a8099', font: { size: 10 } } }
+      }
+    }
+  });
+
+  // ── Timeline ──
+  const container = document.getElementById('prevTimeline');
+  if (!container) return;
+
+  if (!items.length) {
+    container.innerHTML = `<div style="text-align:center;color:var(--ok);padding:60px;border:1px dashed rgba(92,184,122,0.3);border-radius:10px;font-family:var(--font-mono);font-size:12px">✓ Nenhuma entrega pendente ou atrasada encontrada no período</div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+
+  // Agrupa para a timeline
+  const grupos = [
+    { key: 'atrasado-pend', label: '⚠ Atrasadas — Não chegaram (M < Hoje, N vazia)',  cls: 'atrasado',  items: grp['atrasado-pend'] || [] },
+    { key: 'atrasado-real', label: '⏱ Chegaram com Atraso (N > M)',                   cls: 'hoje',      items: grp['atrasado-real'] || [] },
+    { key: 'hoje',          label: '📅 Chegam Hoje ou Amanhã',                         cls: 'hoje',      items: hojeItems },
+    { key: 'prox7',         label: '📦 Previstas nos Próximos 7 Dias',                 cls: 'prox7',     items: p7Items },
+    { key: 'futuro',        label: '🔭 Previstas para Mais de 7 Dias',                 cls: 'futuro',    items: futItems }
+  ].filter(g => g.items.length);
+
+  grupos.forEach(grupo => {
+    const section = document.createElement('div');
+    section.className = 'prev-group';
+
+    const volGrp = volSum(grupo.items);
+    const labelDiv = document.createElement('div');
+    labelDiv.className = `prev-group-label ${grupo.cls}`;
+    labelDiv.innerHTML = `${grupo.label} &nbsp;<span style="opacity:0.7">${grupo.items.length} item(ns) · ${fmt1(volGrp)} m³</span>`;
+    section.appendChild(labelDiv);
+
+    // Ordena por data prevista asc (atrasados: mais antigo primeiro)
+    const sorted = [...grupo.items].sort((a, b) => a.m.localeCompare(b.m));
+
+    sorted.forEach(it => {
+      const r = it.r;
+      const cardType = it.tipo === 'atrasado-pend' ? 'atrasado-pend'
+                     : it.tipo === 'atrasado-real' ? 'atrasado-real'
+                     : it.tipo === 'hoje'          ? 'no-prazo'
+                     : 'futuro-ok';
+
+      // Badge de status
+      let badgeTxt, badgeBg, badgeColor;
+      if (it.tipo === 'atrasado-pend') {
+        badgeTxt = `${it.diasAtraso}d de atraso`;
+        badgeBg = 'rgba(224,92,92,0.15)'; badgeColor = 'var(--danger)';
+      } else if (it.tipo === 'atrasado-real') {
+        badgeTxt = `Entrou ${it.diasAtraso}d atrasado`;
+        badgeBg = 'rgba(224,154,60,0.15)'; badgeColor = 'var(--warn)';
+      } else if (it.tipo === 'hoje') {
+        badgeTxt = it.m === todayStr ? 'Previsto HOJE' : 'Previsto AMANHÃ';
+        badgeBg = 'rgba(224,154,60,0.12)'; badgeColor = 'var(--warn)';
+      } else if (it.tipo === 'prox7') {
+        const dif = Math.ceil((it.mDate - today) / 86400000);
+        badgeTxt = `Em ${dif}d`;
+        badgeBg = 'rgba(200,169,110,0.12)'; badgeColor = 'var(--accent)';
+      } else {
+        const dif = Math.ceil((it.mDate - today) / 86400000);
+        badgeTxt = `Em ${dif}d`;
+        badgeBg = 'rgba(92,155,224,0.10)'; badgeColor = 'var(--info)';
+      }
+
+      const volColor = it.vol > 100 ? 'var(--text)' : it.vol > 30 ? 'var(--accent)' : 'var(--muted)';
+
+      const card = document.createElement('div');
+      card.className = `prev-card ${cardType}`;
+      card.innerHTML = `
+        <div class="prev-card-inner">
+          <div class="prev-card-main">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap">
+              <span class="prev-card-forn">${r[COL.FORNECEDOR] || '—'}</span>
+              <span class="prev-card-nf">${r[COL.NF] || ''}</span>
+              <span style="font-family:var(--font-mono);font-size:9px;color:var(--muted)">${r[COL.OC] || ''}</span>
+              <span class="prev-atraso-badge" style="background:${badgeBg};color:${badgeColor}">${badgeTxt}</span>
+            </div>
+            <div class="prev-card-mat">${r[COL.MATERIAL] || ''} ${r[COL.DESC] ? '· ' + r[COL.DESC] : ''}</div>
+            <div class="prev-card-dates">
+              <div class="prev-date-item">
+                <span class="prev-date-lbl">Previsão Compras (M)</span>
+                <span class="prev-date-val" style="color:${it.tipo.startsWith('atrasado') ? 'var(--danger)' : 'var(--accent)'}">${r[COL.PREV_COMP] || '—'}</span>
+              </div>
+              <div class="prev-date-item">
+                <span class="prev-date-lbl">Entrada Real (N)</span>
+                <span class="prev-date-val" style="color:${it.n ? 'var(--ok)' : 'var(--muted)'}">${r[COL.ENT_LOG] || 'Não registrada'}</span>
+              </div>
+              ${it.n ? `
+              <div class="prev-date-item">
+                <span class="prev-date-lbl">Inspeção (O)</span>
+                <span class="prev-date-val" style="color:${r[COL.INSP] ? 'var(--ok)' : 'var(--warn)'}">${r[COL.INSP] || 'Pendente'}</span>
+              </div>` : ''}
+              <div class="prev-date-item">
+                <span class="prev-date-lbl">Status</span>
+                <span class="prev-date-val" style="font-size:11px;color:var(--muted)">${r[COL.STATUS] || '—'}</span>
+              </div>
+            </div>
+          </div>
+          <div class="prev-card-side">
+            <div class="prev-vol-unit">VOLUME PREVISTO</div>
+            <div class="prev-vol-val" style="color:${volColor}">${fmt1(it.vol)}</div>
+            <div class="prev-vol-unit">m³</div>
+          </div>
+        </div>
+      `;
+      section.appendChild(card);
+    });
+
+    const tl = document.createElement('div');
+    tl.className = 'prev-timeline';
+    tl.appendChild(section);
+    container.appendChild(tl);
+  });
 }
 
 // ─── KPIs ───
