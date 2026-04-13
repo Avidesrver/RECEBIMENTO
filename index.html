@@ -442,97 +442,6 @@
   }
   .data-notice svg { flex-shrink: 0; }
 
-  /* ── PROBLEM CARDS ── */
-  .prob-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 16px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .prob-card:hover { border-color: rgba(200,169,110,0.4); }
-  .prob-card.sem-trat { border-left: 4px solid var(--danger); }
-  .prob-card.em-trat  { border-left: 4px solid var(--warn); }
-
-  .prob-header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 20px;
-    background: var(--surface2);
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
-  }
-  .prob-badge-status {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    padding: 4px 12px;
-    border-radius: 4px;
-    white-space: nowrap;
-  }
-  .prob-badge-status.sem  { background: rgba(224,92,92,0.15);  color: var(--danger); }
-  .prob-badge-status.and  { background: rgba(224,154,60,0.15); color: var(--warn); }
-  .prob-nf   { font-family: var(--font-mono); font-size: 13px; color: var(--accent); font-weight: 600; }
-  .prob-forn { font-weight: 600; color: var(--text); font-size: 14px; }
-  .prob-mat  { font-size: 12px; color: var(--muted); }
-  .prob-meta { display: flex; gap: 20px; margin-left: auto; flex-wrap: wrap; }
-  .prob-meta-item { text-align: right; }
-  .prob-meta-label { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
-  .prob-meta-val   { font-family: var(--font-display); font-size: 18px; }
-
-  .prob-body { padding: 16px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media(max-width:800px) { .prob-body { grid-template-columns: 1fr; } }
-
-  .prob-obs-block {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 14px;
-  }
-  .prob-obs-label {
-    font-family: var(--font-mono);
-    font-size: 9px;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .prob-obs-label .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .prob-obs-text { font-size: 13px; color: var(--text); line-height: 1.6; }
-  .prob-obs-text.empty { color: var(--muted); font-style: italic; }
-
-  .prob-footer {
-    padding: 10px 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .prob-footer-label { font-family: var(--font-mono); font-size: 9px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
-  .prob-div-chip {
-    display: flex;
-    gap: 8px;
-    margin-left: auto;
-    flex-wrap: wrap;
-  }
-  .div-chip {
-    background: rgba(224,92,92,0.1);
-    border: 1px solid rgba(224,92,92,0.2);
-    border-radius: 4px;
-    color: var(--danger);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    padding: 3px 10px;
-  }
-  .div-chip.qty { background: rgba(224,154,60,0.1); border-color: rgba(224,154,60,0.2); color: var(--warn); }
-
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -999,37 +908,107 @@
   <!-- ═══════════ TAB: PLANO DE AÇÃO ═══════════ -->
   <div class="tab-content" id="tab-plano">
 
-    <!-- Cabeçalho executivo -->
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:28px;flex-wrap:wrap">
-      <div>
-        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Painel Executivo · Pendências Acionadas</div>
-        <div style="font-family:var(--font-display);font-size:22px;color:var(--text)">Problemas em Aberto — Coluna V = TRUE</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">Todos os itens abaixo foram sinalizados pelo Recebimento e aguardam direcionamento ou tratativa de Compras / Fábrica</div>
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Lógica de Priorização para Compras</span>
+        <span class="section-sub">Baseado nas colunas AE (Tratativa) e AF (Ação Final)</span>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">TOTAL</div>
-          <div style="font-family:var(--font-display);font-size:26px;color:var(--text)" id="acaoTotal">—</div>
+
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-title">Critérios de Prioridade</div>
+        <div class="priority-row">
+          <div class="priority-num">P1</div>
+          <div class="priority-content">
+            <div class="priority-title">Crítico — Ação Imediata (< 48h)</div>
+            <div class="priority-desc">NFs onde: Coluna S > 5% do Volume K <strong>E</strong> AF está vazia <strong>E</strong> Dias em Aberto > 5. Risco direto de parada de produção. Escalar para Gerência de Compras.</div>
+          </div>
+          <span class="badge badge-danger">URGENTE</span>
         </div>
-        <div style="background:var(--surface);border:1px solid rgba(224,92,92,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">SEM TRATATIVA</div>
-          <div style="font-family:var(--font-display);font-size:26px;color:var(--danger)" id="acaoSemTrat">—</div>
+        <div class="priority-row">
+          <div class="priority-num p2">P2</div>
+          <div class="priority-content">
+            <div class="priority-title">Alta — Tratativa Iniciada mas Não Concluída</div>
+            <div class="priority-desc">NFs onde: AE (Tratativa) está preenchida mas AF (Ação Final) está vazia <strong>OU</strong> Status = "Pendente Compras". Acompanhar resposta do fornecedor em até 3 dias.</div>
+          </div>
+          <span class="badge badge-warn">ALTA</span>
         </div>
-        <div style="background:var(--surface);border:1px solid rgba(224,154,60,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">EM ANDAMENTO</div>
-          <div style="font-family:var(--font-display);font-size:26px;color:var(--warn)" id="acaoEmTrat">—</div>
+        <div class="priority-row">
+          <div class="priority-num p3">P3</div>
+          <div class="priority-content">
+            <div class="priority-title">Monitoramento — Divergência Leve</div>
+            <div class="priority-desc">NFs com S entre 2–5% do Volume K, tratativa em andamento e AF preenchida. Registrar no histórico do fornecedor para análise de padrão trimestral.</div>
+          </div>
+          <span class="badge badge-ok">MONIT.</span>
         </div>
-        <div style="background:var(--surface);border:1px solid rgba(92,155,224,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">Δ TOTAL (m³)</div>
-          <div style="font-family:var(--font-display);font-size:26px;color:var(--info)" id="acaoDivTotal">—</div>
+        <div class="priority-row">
+          <div class="priority-num" style="background:var(--muted)">P4</div>
+          <div class="priority-content">
+            <div class="priority-title">Encerrado — Documentar</div>
+            <div class="priority-desc">NFs com AF preenchida, Status = Liberado e S dentro da tolerância. Manter registro para auditoria e cálculo de KPIs históricos de fornecedor.</div>
+          </div>
+          <span class="badge badge-neutral">ENCERR.</span>
         </div>
       </div>
     </div>
 
-    <!-- Cards de problema -->
-    <div id="planoCards">
-      <div style="text-align:center;color:var(--muted);padding:60px;border:1px dashed var(--border);border-radius:10px">
-        Clique em <strong>↻ Atualizar Dados</strong> para carregar os itens sinalizados (Coluna V = TRUE)
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Fluxo Recomendado de Tratativa</span>
+      </div>
+
+      <div class="two-col">
+        <div class="analysis-block danger">
+          <div class="analysis-title">Divergência de Qualidade (Col. Q)</div>
+          <div class="analysis-text">
+            <strong>1.</strong> Registrar no link da inspeção (Col. W) com foto e medições.<br>
+            <strong>2.</strong> Preencher Col. AB (Obs. Recebimento) com descrição técnica.<br>
+            <strong>3.</strong> Acionar Compras via Col. V (marcador) para abertura de NCR.<br>
+            <strong>4.</strong> Compras preenche Col. AD (Tratativa) com posição do fornecedor.<br>
+            <strong>5.</strong> Ação Final (Col. AF): Devolução, Desconto em NF ou Reposição.
+          </div>
+        </div>
+
+        <div class="analysis-block warn">
+          <div class="analysis-title">Falta de Quantidade (Col. R)</div>
+          <div class="analysis-text">
+            <strong>1.</strong> Conferir volume físico (Col. P) e calcular diferença com Col. K.<br>
+            <strong>2.</strong> Registrar divergência na Col. R e sinalizar Col. V.<br>
+            <strong>3.</strong> Compras solicita complemento ao fornecedor ou novo pedido parcial.<br>
+            <strong>4.</strong> Avaliar impacto no Movigrama: volume faltante impacta saldo esperado.<br>
+            <strong>5.</strong> Ação Final (Col. AF): Complemento, Crédito ou Reemissão de NF.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">NFs Aguardando Ação</span>
+        <span class="section-sub">Filtradas por prioridade — dados ao vivo após carregar a planilha</span>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table id="tblAcoes">
+            <thead>
+              <tr>
+                <th>Prioridade</th>
+                <th>Fornecedor</th>
+                <th>NF</th>
+                <th>Material</th>
+                <th>Δ Total (m³)</th>
+                <th>% Div.</th>
+                <th>Dias em Aberto</th>
+                <th>Obs. Recebimento</th>
+                <th>Tratativa</th>
+                <th>Ação Final</th>
+                <th>Link Inspeção</th>
+              </tr>
+            </thead>
+            <tbody id="tblAcoesBody">
+              <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:30px">Clique em "↻ Atualizar Dados" para carregar</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1065,13 +1044,12 @@ const COL = {
   DIV_QTD:    17,  // R
   DIV_TOTAL:  18,  // S
   STATUS:     20,  // U
-  MARCADOR:   21,  // V  ← "true" = acionar Compras
+  MARCADOR:   21,  // V
   LINK_INSP:  22,  // W
-  OBS_REC:    27,  // AB — Observações Recebimento
-  OBS_COMP:   28,  // AC — Observações Compras
-  TRAT_COMP:  29,  // AD — Tratativa Compras
-  TRAT_FAB:   30,  // AE — Tratativa Fábrica
-  ACAO_FINAL: 31,  // AF — Ação Final
+  OBS_REC:    27,  // AB
+  OBS_COMP:   29,  // AD
+  TRATATIVA:  30,  // AE
+  ACAO_FINAL: 31,  // AF
 };
 
 // ═══════════════════════════════════════════════════
@@ -1172,13 +1150,8 @@ function loadDemoData() {
     row[COL.DIV_QTD]    = (Math.random() < 0.2)  ? (Math.random() * 2).toFixed(2) : '0';
     row[COL.DIV_TOTAL]  = divT;
     row[COL.STATUS]     = status[Math.floor(Math.random() * status.length)];
-    // V = true quando há divergência e foi acionado Compras
-    row[COL.MARCADOR]   = parseFloat(divT) > 0 && Math.random() > 0.4 ? 'TRUE' : '';
-    row[COL.OBS_REC]    = parseFloat(divT) > 0 ? 'Material recebido com divergência. Medições fora do especificado.' : '';
-    row[COL.OBS_COMP]   = parseFloat(divT) > 0 && Math.random() > 0.5 ? 'Fornecedor notificado. Aguardando retorno.' : '';
-    row[COL.TRAT_COMP]  = parseFloat(divT) > 0 && Math.random() > 0.5 ? 'Acionado fornecedor para esclarecimento e emissão de crédito.' : '';
-    row[COL.TRAT_FAB]   = parseFloat(divT) > 0 && Math.random() > 0.6 ? 'Separado para análise de aproveitamento parcial.' : '';
-    row[COL.ACAO_FINAL] = parseFloat(divT) > 0 && Math.random() > 0.7 ? 'Nota de débito emitida.' : '';
+    row[COL.TRATATIVA]  = parseFloat(divT) > 0 ? 'Acionado fornecedor para esclarecimento.' : '';
+    row[COL.ACAO_FINAL] = parseFloat(divT) > 0 && Math.random() > 0.5 ? 'Nota de débito emitida.' : '';
     rawData.push(row);
   }
 
@@ -1719,147 +1692,57 @@ function renderTableNFs() {
       <td><span class="badge ${cls}">${r[COL.DIV_TOTAL] || '0'}</span></td>
       <td style="font-family:var(--font-mono)">${lead}</td>
       <td><span class="badge ${stCls}">${st}</span></td>
-      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r[COL.TRAT_COMP] || r[COL.TRAT_FAB] || '—'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r[COL.TRATATIVA] || '—'}</td>
     `;
     tbody.appendChild(tr);
   });
   if (!show.length) tbody.innerHTML = '<tr><td colspan="19" style="text-align:center;color:var(--muted);padding:20px">Sem dados</td></tr>';
 }
 
-// ─── PLANO DE AÇÃO — Cards visuais ───
+// ─── TABLE: Ações ───
 function renderTableAcoes() {
-  const today  = new Date();
-  const container = document.getElementById('planoCards');
-  if (!container) return;
+  const today = new Date();
+  const tbody = document.getElementById('tblAcoesBody');
+  tbody.innerHTML = '';
 
-  // Filtra SOMENTE os que têm Coluna V = "true" (case-insensitive, trim)
-  const acionados = filteredData.filter(r => {
-    const v = String(r[COL.MARCADOR] || '').trim().toLowerCase();
-    return v === 'true' || v === '1' || v === 'sim' || v === 'yes';
-  });
+  const rows = filteredData
+    .filter(r => parseFloat(r[COL.DIV_TOTAL]) > 0 || !r[COL.INSP])
+    .map(r => {
+      const vC = parseFloat(r[COL.VOL_COMP]) || 1;
+      const dT = parseFloat(r[COL.DIV_TOTAL]) || 0;
+      const pct = (dT / vC * 100).toFixed(1);
+      const dias = r[COL.ENT_LOG] ? Math.max(0, Math.floor((today - new Date(normalizeDate(r[COL.ENT_LOG]))) / 86400000)) : 0;
+      const hasTrat = r[COL.TRATATIVA] && r[COL.TRATATIVA].trim();
+      const hasAF   = r[COL.ACAO_FINAL] && r[COL.ACAO_FINAL].trim();
+      let prio, prioLabel, prioCls;
+      if (parseFloat(pct) > 5 && !hasAF && dias > 5) { prio = 1; prioLabel = 'P1 — URGENTE';  prioCls = 'badge-danger'; }
+      else if (hasTrat && !hasAF)                     { prio = 2; prioLabel = 'P2 — ALTA';     prioCls = 'badge-warn'; }
+      else if (parseFloat(pct) > 2)                   { prio = 3; prioLabel = 'P3 — MONIT.';   prioCls = 'badge-info'; }
+      else                                             { prio = 4; prioLabel = 'P4 — OK';       prioCls = 'badge-ok'; }
+      return { r, pct, dias, prio, prioLabel, prioCls };
+    })
+    .sort((a,b) => a.prio - b.prio || b.dias - a.dias);
 
-  // Ordena: sem tratativa primeiro, depois em andamento; dentro de cada grupo por dias em aberto desc
-  const rows = acionados.map(r => {
-    const vC   = parseFloat(r[COL.VOL_COMP]) || 1;
-    const dT   = parseFloat(r[COL.DIV_TOTAL]) || 0;
-    const dQ   = parseFloat(r[COL.DIV_QUAL])  || 0;
-    const dR   = parseFloat(r[COL.DIV_QTD])   || 0;
-    const pct  = (dT / vC * 100).toFixed(1);
-    const dias = r[COL.ENT_LOG]
-      ? Math.max(0, Math.floor((today - new Date(normalizeDate(r[COL.ENT_LOG]))) / 86400000))
-      : 0;
-    const hasTratComp = !!(r[COL.TRAT_COMP]  && r[COL.TRAT_COMP].trim());
-    const hasTratFab  = !!(r[COL.TRAT_FAB]   && r[COL.TRAT_FAB].trim());
-    const hasAF       = !!(r[COL.ACAO_FINAL]  && r[COL.ACAO_FINAL].trim());
-    const emTrat      = hasTratComp || hasTratFab;
-    return { r, pct, dias, dT, dQ, dR, emTrat, hasAF };
-  }).sort((a, b) => {
-    if (!a.emTrat && b.emTrat) return -1;
-    if (a.emTrat && !b.emTrat) return  1;
-    return b.dias - a.dias;
-  });
-
-  // Contadores para o header
-  const semTrat  = rows.filter(x => !x.emTrat).length;
-  const emTrat   = rows.filter(x =>  x.emTrat).length;
-  const divTotal = rows.reduce((s, x) => s + x.dT, 0);
-  const el = id => document.getElementById(id);
-  if (el('acaoTotal'))    el('acaoTotal').textContent    = rows.length;
-  if (el('acaoSemTrat'))  el('acaoSemTrat').textContent  = semTrat;
-  if (el('acaoEmTrat'))   el('acaoEmTrat').textContent   = emTrat;
-  if (el('acaoDivTotal')) el('acaoDivTotal').textContent = fmt1(divTotal);
-
-  if (!rows.length) {
-    container.innerHTML = `
-      <div style="text-align:center;color:var(--ok);padding:60px;border:1px dashed rgba(92,184,122,0.3);border-radius:10px;font-family:var(--font-mono);font-size:12px;letter-spacing:0.08em">
-        ✓ NENHUM ITEM SINALIZADO — Coluna V sem registros TRUE no período filtrado
-      </div>`;
-    return;
-  }
-
-  container.innerHTML = '';
-
-  rows.forEach(({ r, pct, dias, dT, dQ, dR, emTrat, hasAF }) => {
-    const statusLabel = !emTrat ? 'SEM TRATATIVA' : hasAF ? 'CONCLUÍDO' : 'EM ANDAMENTO';
-    const statusCls   = !emTrat ? 'sem' : hasAF ? 'ok' : 'and';
-    const cardCls     = !emTrat ? 'sem-trat' : 'em-trat';
-    const diasColor   = dias > 10 ? 'var(--danger)' : dias > 5 ? 'var(--warn)' : 'var(--ok)';
-
-    // Helpers para renderizar bloco de texto
-    const obsBlock = (label, dotColor, texto, colKey) => {
-      const t = (r[colKey] || '').trim();
-      return `
-        <div class="prob-obs-block">
-          <div class="prob-obs-label">
-            <span class="dot" style="background:${dotColor}"></span>
-            ${label}
-          </div>
-          <div class="prob-obs-text${t ? '' : ' empty'}">${t || 'Não preenchido'}</div>
-        </div>`;
-    };
-
-    // Chips de divergência
-    let chips = '';
-    if (dQ > 0) chips += `<span class="div-chip">Qualidade: ${fmt1(dQ)} m³</span>`;
-    if (dR > 0) chips += `<span class="div-chip qty">Quantidade: ${fmt1(dR)} m³</span>`;
-    if (!chips && dT > 0) chips = `<span class="div-chip">Divergência: ${fmt1(dT)} m³</span>`;
-
-    // Link inspeção
-    const linkInsp = (r[COL.LINK_INSP] || '').trim();
-    const linkHtml = linkInsp
-      ? `<a href="${linkInsp}" target="_blank" style="font-family:var(--font-mono);font-size:10px;color:var(--info);text-decoration:none;padding:3px 10px;border:1px solid rgba(92,155,224,0.3);border-radius:4px;margin-left:auto">↗ Ver inspeção</a>`
-      : '';
-
-    const card = document.createElement('div');
-    card.className = `prob-card ${cardCls}`;
-    card.innerHTML = `
-      <div class="prob-header">
-        <span class="prob-badge-status ${statusCls}">${statusLabel}</span>
-        <div>
-          <div class="prob-nf">${r[COL.NF] || '—'} &nbsp;·&nbsp; <span style="color:var(--muted);font-size:11px">${r[COL.OC] || ''}</span></div>
-          <div class="prob-forn">${r[COL.FORNECEDOR] || '—'}</div>
-          <div class="prob-mat">${r[COL.MATERIAL] || ''} · ${r[COL.DESC] || ''}</div>
-        </div>
-        <div class="prob-meta">
-          <div class="prob-meta-item">
-            <div class="prob-meta-label">Dias em Aberto</div>
-            <div class="prob-meta-val" style="color:${diasColor}">${dias}d</div>
-          </div>
-          <div class="prob-meta-item">
-            <div class="prob-meta-label">Δ Total m³</div>
-            <div class="prob-meta-val" style="color:var(--danger)">${fmt1(dT)}</div>
-          </div>
-          <div class="prob-meta-item">
-            <div class="prob-meta-label">% Divergência</div>
-            <div class="prob-meta-val" style="color:${parseFloat(pct)>5?'var(--danger)':parseFloat(pct)>2?'var(--warn)':'var(--ok)'}">${pct}%</div>
-          </div>
-          <div class="prob-meta-item">
-            <div class="prob-meta-label">Entrada Log.</div>
-            <div class="prob-meta-val" style="font-size:13px;color:var(--muted)">${r[COL.ENT_LOG] || '—'}</div>
-          </div>
-          <div class="prob-meta-item">
-            <div class="prob-meta-label">Status</div>
-            <div class="prob-meta-val" style="font-size:12px">${r[COL.STATUS] || '—'}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="prob-body">
-        ${obsBlock('Obs. Recebimento (AB)', 'var(--info)', '', COL.OBS_REC)}
-        ${obsBlock('Obs. Compras (AC)', 'var(--accent)', '', COL.OBS_COMP)}
-        ${obsBlock('Tratativa Compras (AD)', 'var(--warn)', '', COL.TRAT_COMP)}
-        ${obsBlock('Tratativa Fábrica (AE)', 'var(--ok)', '', COL.TRAT_FAB)}
-      </div>
-
-      <div class="prob-footer">
-        <div class="prob-footer-label">Ação Final (AF):</div>
-        <div style="font-size:13px;color:${hasAF ? 'var(--ok)' : 'var(--muted)'};font-style:${hasAF ? 'normal' : 'italic'}">${(r[COL.ACAO_FINAL] || '').trim() || 'Aguardando definição'}</div>
-        <div class="prob-div-chip">${chips}</div>
-        ${linkHtml}
-      </div>
+  rows.forEach(({ r, pct, dias, prioLabel, prioCls }) => {
+    const link = r[COL.LINK_INSP] ? `<a href="${r[COL.LINK_INSP]}" target="_blank" style="color:var(--info)">Abrir</a>` : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge ${prioCls}">${prioLabel}</span></td>
+      <td style="font-weight:600">${r[COL.FORNECEDOR]}</td>
+      <td style="font-family:var(--font-mono)">${r[COL.NF]}</td>
+      <td>${r[COL.MATERIAL]}</td>
+      <td style="color:var(--danger);font-weight:600">${fmt1(parseFloat(r[COL.DIV_TOTAL]))}</td>
+      <td style="font-family:var(--font-mono)">${pct}%</td>
+      <td style="font-family:var(--font-mono);color:${dias > 5 ? 'var(--danger)' : 'var(--muted)'}">${dias}d</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)">${r[COL.OBS_REC] || '—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r[COL.TRATATIVA] || '—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:${r[COL.ACAO_FINAL] ? 'var(--ok)' : 'var(--muted)'}">${r[COL.ACAO_FINAL] || '—'}</td>
+      <td>${link}</td>
     `;
-    container.appendChild(card);
+    tbody.appendChild(tr);
   });
+
+  if (!rows.length) tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">Sem pendências</td></tr>';
 }
 
 // ═══════════════════════════════════════════════════
