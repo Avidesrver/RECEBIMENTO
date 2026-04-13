@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recebimento de Madeira AVIDES — Relatório Gerencial</title>
+<title>Recebimento de Madeira — Relatório Gerencial</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -1097,30 +1097,35 @@
   </div>
 
   <!-- ═══════════ TAB: PLANO DE AÇÃO ═══════════ -->
-<div id="aba-antecipacao" class="tab-content">
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">Total Previsto (m³)</div>
-      <div id="vol-previsto" class="stat-value">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Entregas Atrasadas</div>
-      <div id="qtd-atrasado" class="stat-value" style="color: var(--danger);">0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Pendentes de Entrada</div>
-      <div id="qtd-pendente" class="stat-value" style="color: var(--warn);">0</div>
-    </div>
-  </div>
-  
-  <div class="card">
-    <div class="card-header">
-      <h3 class="card-title">Cronograma de Chegada de Madeira</h3>
-    </div>
-    <div id="lista-antecipacao" class="grid-cards-antecipacao">
+  <div class="tab-content" id="tab-plano">
+
+    <!-- Cabeçalho executivo -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:28px;flex-wrap:wrap">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:6px">Painel Executivo · Pendências Acionadas</div>
+        <div style="font-family:var(--font-display);font-size:22px;color:var(--text)">Problemas em Aberto — Coluna V = TRUE</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">Todos os itens abaixo foram sinalizados pelo Recebimento e aguardam direcionamento ou tratativa de Compras / Fábrica</div>
       </div>
-  </div>
-</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">TOTAL</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--text)" id="acaoTotal">—</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(224,92,92,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">SEM TRATATIVA</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--danger)" id="acaoSemTrat">—</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(224,154,60,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">EM ANDAMENTO</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--warn)" id="acaoEmTrat">—</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(92,155,224,0.4);border-radius:8px;padding:12px 18px;text-align:center;min-width:90px">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em">Δ TOTAL (m³)</div>
+          <div style="font-family:var(--font-display);font-size:26px;color:var(--info)" id="acaoDivTotal">—</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Cards de problema -->
     <div id="planoCards">
       <div style="text-align:center;color:var(--muted);padding:60px;border:1px dashed var(--border);border-radius:10px">
@@ -1476,69 +1481,66 @@ function renderAll() {
 }
 
 // ─── PREVISÃO DE ENTRADAS ───
-function renderAntecipacao() {
-  const container = document.getElementById('lista-antecipacao');
-  const hoje = new Date();
-  hoje.setHours(0,0,0,0);
+function renderPrevisao() {
+  const today    = new Date(); today.setHours(0,0,0,0);
+  const todayStr = fmtDate(today);
+  const amanha   = new Date(today); amanha.setDate(amanha.getDate() + 1);
+  const d7       = new Date(today); d7.setDate(d7.getDate() + 7);
 
-  let volTotal = 0;
-  let atrasados = 0;
-  let pendentes = 0;
+  // Filtra: col M preenchida E (col N vazia OU M > N — atraso real na entrega)
+  const items = rawData.filter(r => {
+    const m = normalizeDate(r[COL.PREV_COMP]);
+    const n = normalizeDate(r[COL.ENT_LOG]);
+    if (!m) return false;
+    // Inclui se N está vazia (ainda não chegou) OU se a entrada real foi depois da previsão
+    return !n || n > m;
+  }).map(r => {
+    const m    = normalizeDate(r[COL.PREV_COMP]);
+    const n    = normalizeDate(r[COL.ENT_LOG]);
+    const mDate = new Date(m); mDate.setHours(0,0,0,0);
+    const vol  = parseFloat(r[COL.VOL_COMP]) || 0;
 
-  // Filtra apenas os dados que interessam (M preenchido e N vazio/maior que M)
-  const dadosAntecipacao = state.data.filter(row => {
-    const dataPrev = parseData(row[12]); // Coluna M (index 12)
-    const dataReal = parseData(row[13]); // Coluna N (index 13)
-    const volume = parseFloat(row[10]) || 0; // Coluna K (index 10)
-
-    if (!dataPrev) return false;
-
-    // Lógica: Pendente (N vazio) ou Atrasado (M < Hoje ou M > N)
-    const isVazioN = !row[13] || row[13].toString().trim() === "";
-    const isAtrasado = (isVazioN && dataPrev < hoje) || (dataReal && dataPrev < dataReal);
-
-    if (isVazioN || isAtrasado) {
-      volTotal += volume;
-      if (isAtrasado) atrasados++;
-      if (isVazioN) pendentes++;
-      return true;
+    // Classificação
+    let tipo, diasAtraso = 0;
+    if (!n) {
+      // Não chegou ainda
+      if (mDate < today)       { tipo = 'atrasado-pend'; diasAtraso = Math.floor((today - mDate) / 86400000); }
+      else if (m <= fmtDate(amanha)) { tipo = 'hoje'; }
+      else if (m <= fmtDate(d7))    { tipo = 'prox7'; }
+      else                           { tipo = 'futuro'; }
+    } else {
+      // Chegou atrasado (N > M)
+      const nDate = new Date(n); nDate.setHours(0,0,0,0);
+      diasAtraso = Math.floor((nDate - mDate) / 86400000);
+      tipo = 'atrasado-real';
     }
-    return false;
+    return { r, m, n, mDate, vol, tipo, diasAtraso };
   });
 
-  // Atualiza contadores
-  document.getElementById('vol-previsto').innerText = volTotal.toFixed(2) + ' m³';
-  document.getElementById('qtd-atrasado').innerText = atrasados;
-  document.getElementById('qtd-pendente').innerText = pendentes;
+  // Contadores
+  const grp = { 'atrasado-pend': [], 'atrasado-real': [], hoje: [], prox7: [], futuro: [] };
+  items.forEach(it => (grp[it.tipo] || (grp[it.tipo] = [])).push(it));
 
-  // Renderiza Cards
-  container.innerHTML = dadosAntecipacao.map(row => {
-    const dataPrev = row[12];
-    const statusClass = (parseData(row[12]) < hoje && !row[13]) ? 'card-atrasado' : 'card-normal';
-    
-    return `
-      <div class="card-item ${statusClass}">
-        <div class="card-row">
-          <strong>Fornecedor:</strong> ${row[2]} </div>
-        <div class="card-row">
-          <span>OC: ${row[1]}</span> | <span>Volume: ${row[10]} m³</span>
-        </div>
-        <div class="card-row" style="margin-top:10px">
-          <span class="badge ${statusClass}">Previsão: ${dataPrev}</span>
-          ${row[13] ? `<span class="badge">Entrada: ${row[13]}</span>` : '<span class="badge warning">Aguardando</span>'}
-        </div>
-      </div>
-    `;
-  }).join('');
-}
+  const atrasados = [...(grp['atrasado-pend']||[]), ...(grp['atrasado-real']||[])];
+  const hojeItems = grp['hoje'] || [];
+  const p7Items   = grp['prox7'] || [];
+  const futItems  = grp['futuro'] || [];
 
-// Função auxiliar para converter string de data (DD/MM/YYYY) em Objeto Date
-function parseData(str) {
-  if (!str) return null;
-  const partes = str.split('/');
-  if (partes.length !== 3) return null;
-  return new Date(partes[2], partes[1] - 1, partes[0]);
-}
+  const volSum = arr => arr.reduce((s,x) => s + x.vol, 0);
+  const volTotal = volSum(items);
+
+  // KPIs
+  const setKpi = (idQt, idVol, arr, cor) => {
+    const el1 = document.getElementById(idQt), el2 = document.getElementById(idVol);
+    if (el1) el1.textContent = arr.length;
+    if (el2) el2.textContent = fmt1(volSum(arr)) + ' m³';
+  };
+  setKpi('prevQtAtras','prevVolAtras', atrasados);
+  setKpi('prevQtHoje', 'prevVolHoje',  hojeItems);
+  setKpi('prevQt7d',   'prevVol7d',    p7Items);
+  setKpi('prevQtFut',  'prevVolFut',   futItems);
+  const elT = document.getElementById('prevVolTotal');
+  if (elT) elT.textContent = fmt1(volTotal);
 
   // ── Gráfico por semana ──
   // Agrupa por semana (início da semana ISO)
