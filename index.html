@@ -1429,6 +1429,7 @@ function applyFilters() {
   const dTo    = document.getElementById('fDateTo').value;
   const status = document.getElementById('fStatus').value.trim();
 
+  // ── Filtra aba Acompanhamento ──
   filteredData = rawData.filter(r => {
     if (forn   && norm(r[COL.FORNECEDOR]) !== norm(forn))   return false;
     if (mat    && norm(r[COL.MATERIAL])   !== norm(mat))    return false;
@@ -1439,13 +1440,39 @@ function applyFilters() {
     return true;
   });
 
-  // Movigrama: filtra pela coluna A (mesma data da col N)
-  filteredMoviData = moviData.filter(r => {
-    const d = normalizeDate(r[0]);
-    if (dFrom && d && d < dFrom) return false;
-    if (dTo   && d && d > dTo)   return false;
-    return true;
-  });
+  // ── JOIN: monta conjunto de datas válidas a partir de filteredData (col N) ──
+  // Se há filtro de Fornecedor, Material ou Status, o Movigrama deve mostrar
+  // apenas as datas que existem em filteredData (col N = data de entrada).
+  // Se não há nenhum desses filtros, usa todas as datas do moviData.
+  const temFiltroAtrib = !!(forn || mat || status);
+
+  if (temFiltroAtrib) {
+    // Datas de entrada dos registros filtrados (col N)
+    const datasValidas = new Set(
+      filteredData
+        .map(r => normalizeDate(r[COL.ENT_LOG]))
+        .filter(Boolean)
+    );
+    // Filtra moviData: mantém apenas linhas cuja data (col A) está no conjunto
+    // E respeita também o filtro de datas se informado
+    filteredMoviData = moviData.filter(r => {
+      const d = normalizeDate(r[0]);
+      if (!d) return false;
+      if (!datasValidas.has(d)) return false;
+      if (dFrom && d < dFrom) return false;
+      if (dTo   && d > dTo)   return false;
+      return true;
+    });
+  } else {
+    // Sem filtro de atributo — filtra apenas por intervalo de datas
+    filteredMoviData = moviData.filter(r => {
+      const d = normalizeDate(r[0]);
+      if (!d) return false;
+      if (dFrom && d < dFrom) return false;
+      if (dTo   && d > dTo)   return false;
+      return true;
+    });
+  }
 
   renderAll();
 }
@@ -1458,7 +1485,7 @@ function norm(v) {
 function clearFilters() {
   ['fFornecedor','fMaterial','fStatus'].forEach(id => document.getElementById(id).value = '');
   ['fDateFrom','fDateTo'].forEach(id => document.getElementById(id).value = '');
-  filteredData = [...rawData];
+  filteredData     = [...rawData];
   filteredMoviData = [...moviData];
   renderAll();
 }
@@ -1558,8 +1585,8 @@ function renderPrevisao() {
   });
   const semKeys   = Object.keys(semanas).sort();
   const labelsSem = semKeys.map(k => {
-    const d = new Date(k);
-    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+    const [y, m, d] = k.split('-');
+    return `${d}/${m}`;
   });
 
   destroyChart('chartPrevSemana');
@@ -1887,18 +1914,35 @@ function renderMovigrama() {
     if (idx > 0) saldoBase = parseFloat(moviData[idx - 1][4]) || 0;
   }
 
-  const labels = data.map(r => r[0]);
-  const ent    = data.map(r => parseFloat(r[1]) || 0);
-  const sai    = data.map(r => parseFloat(r[2]) || 0);
+  // Normaliza datas dos labels para yyyy-mm-dd e gera label visual dd/mm
+  const labelsRaw  = data.map(r => normalizeDate(r[0]));   // yyyy-mm-dd para ordenação
+  const labelsView = labelsRaw.map(d => {
+    if (!d) return '';
+    const [y, m, dia] = d.split('-');
+    return `${dia}/${m}/${y.slice(2)}`;  // dd/mm/aa
+  });
+
+  const ent = data.map(r => parseFloat(r[1]) || 0);
+  const sai = data.map(r => parseFloat(r[2]) || 0);
 
   // ── Saldo acumulado ──
   const saldo = [];
   let acc = saldoBase;
   const semFiltroData = !document.getElementById('fDateFrom').value && !document.getElementById('fDateTo').value;
+  const temFiltroAtrib = !!(
+    document.getElementById('fFornecedor').value.trim() ||
+    document.getElementById('fMaterial').value.trim()   ||
+    document.getElementById('fStatus').value.trim()
+  );
   data.forEach((r, i) => {
     const rawS = parseFloat(r[4]);
-    if (semFiltroData && !isNaN(rawS)) { saldo.push(rawS); }
-    else { acc = acc + ent[i] - sai[i]; saldo.push(parseFloat(acc.toFixed(2))); }
+    // Usa saldo da planilha apenas quando não há nenhum filtro ativo
+    if (semFiltroData && !temFiltroAtrib && !isNaN(rawS)) {
+      saldo.push(rawS);
+    } else {
+      acc = acc + ent[i] - sai[i];
+      saldo.push(parseFloat(acc.toFixed(2)));
+    }
   });
 
   // ── Capacidade nominal: média do top-10% de saídas (pico sustentável) ──
@@ -1957,18 +2001,24 @@ function renderMovigrama() {
   if (periodoEl) {
     const dF = document.getElementById('fDateFrom').value;
     const dT = document.getElementById('fDateTo').value;
-    periodoEl.textContent = (dF || dT)
-      ? `Período: ${dF||'…'} → ${dT||'…'} · ${data.length} dia(s)`
-      : `Período completo · ${data.length} dia(s)`;
+    const filtrosAtivos = [
+      document.getElementById('fFornecedor').value.trim(),
+      document.getElementById('fMaterial').value.trim(),
+      document.getElementById('fStatus').value.trim()
+    ].filter(Boolean);
+    let txt = (dF || dT) ? `${dF||'…'} → ${dT||'…'} · ` : 'Período completo · ';
+    if (filtrosAtivos.length) txt += `[${filtrosAtivos.join(', ')}] · `;
+    txt += `${data.length} dia(s)`;
+    periodoEl.textContent = txt;
   }
 
   // ── Gráfico ──
-  const capLine = Array(labels.length).fill(parseFloat(capNominal.toFixed(2)));
+  const capLine = Array(labelsView.length).fill(parseFloat(capNominal.toFixed(2)));
   destroyChart('chartMovigrama');
   charts['chartMovigrama'] = new Chart(document.getElementById('chartMovigrama'), {
     type: 'bar',
     data: {
-      labels,
+      labels: labelsView,
       datasets: [
         { type: 'bar',  label: 'Entrada',          data: ent,     backgroundColor: 'rgba(92,184,122,0.45)', borderColor: 'rgba(92,184,122,0.9)', borderWidth: 1, yAxisID: 'y' },
         { type: 'bar',  label: 'Saída',             data: sai,     backgroundColor: 'rgba(224,154,60,0.45)', borderColor: 'rgba(224,154,60,0.9)', borderWidth: 1, yAxisID: 'y' },
@@ -2014,7 +2064,6 @@ function renderMovigrama() {
   // ── Tabela auxiliar ──
   const tbody = document.getElementById('tblMoviBody');
   tbody.innerHTML = '';
-  // Exibe do mais recente ao mais antigo
   data.slice().reverse().forEach((r, iRev) => {
     const i   = data.length - 1 - iRev;
     const e   = ent[i], s = sai[i], bal = saldo[i];
@@ -2027,7 +2076,7 @@ function renderMovigrama() {
     const efColor = efic[i] == null ? 'var(--muted)' : efic[i] >= 100 ? 'var(--ok)' : efic[i] >= 70 ? 'var(--warn)' : 'var(--danger)';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="font-family:var(--font-mono)">${r[0]}</td>
+      <td style="font-family:var(--font-mono)">${labelsView[i]}</td>
       <td style="color:var(--ok)">${fmt1(e)}</td>
       <td style="color:var(--warn)">${fmt1(s)}</td>
       <td style="font-weight:600">${fmt1(bal)}</td>
